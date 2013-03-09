@@ -7,8 +7,8 @@ Estratégia geral
 Utilizar métodos hierárquicos para estimar matrizes de covariância e
 médias fenotípicas de forma filogeneticamente estruturada.
 
-Modelo
-------
+Resumo do Modelo
+----------------
 
 Dada um filogenia e um conjunto de medidas quantitativas, podemos escrever um modelo hierárquico para estimar médias e covariâncias entre as medidas utilizando aproximações gaussianas.
 
@@ -25,4 +25,12 @@ Passos do modelo:
     + gaussiana básica: $p(z|\theta, \sigma) = N(z|\theta, \sigma) = \sum_{ij} exp\left(-\frac{1}{2}*(z_{ij} - \theta_i)\sigma_i^1(z_{ij}-\theta_i)\right)$
 3. Priors hierárquicos
     + Cada nó k da filogenia equivale a um conjunto de prior para os ramos acima dele
-    + Para um terminal i, o prior de $\theta_i$ e $\sigma_i$ seriam da forma $N(\theta_i|\Theta_k, C_k)$ e $Wis(\sigma_i|\Sigma_k)$
+    + Para um terminal i, os priors de $\theta_i$ e $\sigma_i$ seriam da forma $N(\theta_i|\Theta_k, C_k)$ e $Wis(\sigma_i|\Sigma_k)$
+    + Para os nós internos, o processo se repete até a raiz, onde
+      um pior não informativo (mas integravel) deve ser definido. Esse é o
+      ponto mais subjetivo do processo e seria bom fazer analise de
+      sensibilidade aqui.
+4. Integração
+    + Depois de montado o modelo, como produto de priors e verossimilhança, ele é integrado numericamente via monte carlo, tomando amostras de todos os parametros ($\theta, \sigma, \Theta, \Sigma$) seguindo a distribuição de probabilidade a posteriori
+5. A partir das amostras os parâmetros são estimados.
+5. PROFIT!
