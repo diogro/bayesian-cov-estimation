@@ -19,7 +19,7 @@ Passos do modelo:
     + $\theta_i$ médias das populações
     + $\sigma_i$ matriz de covariância das populações
     + $\Theta_k$ hiper parâmetros, médias nos nós da filogenia
-    + $C_mn$ hiper parâmetro, tensor de covariância das médias, não estendi direito essa parte ainda (pode incluir distância filogenética)
+    + $C_mn$ hiper parâmetro, tensor de covariância das médias, não entendi direito essa parte ainda (pode incluir distância filogenética)
     + $\Sigma_k$ hiper parâmetros, matriz de covariâncias nos nós da filogenia
 2. Verossimilhança das populações
     + gaussiana básica: $p(z|\theta, \sigma) = N(z|\theta, \sigma) = \sum_{ij} exp\left(-\frac{1}{2}*(z_{ij} - \theta_i)\sigma_i^1(z_{ij}-\theta_i)\right)$
