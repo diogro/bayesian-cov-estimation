@@ -27,7 +27,7 @@ Passos do modelo:
     + gaussiana básica: $p(z|\theta, \sigma) = N(z|\theta, \sigma) = \sum_{ij} exp\left(-\frac{1}{2}*(z_{ij} - \theta_i)\sigma_i^1(z_{ij}-\theta_i)\right)$
 3. Priors hierárquicos
     + Cada nó k da filogenia equivale a um conjunto de prior para os ramos acima dele
-    + Para um terminal i, os priors de $\theta_i$ e $\sigma_i$ seriam da forma $N(\theta_i|\Theta_k, C_mn)$ e $Wis(\sigma_i|\Sigma_k)$
+    + Para um terminal i, os priors de $\theta_i$ e $\sigma_i$ seriam da forma $N(\theta_i|\Theta_k, C_{mn})$ e $Wis(\sigma_i|\Sigma_k)$
     + Para os nós internos, o processo se repete até a raiz, onde
       um pior não informativo (mas integrável) deve ser definido. Esse é o
       ponto mais subjetivo do processo e seria bom fazer analise de
