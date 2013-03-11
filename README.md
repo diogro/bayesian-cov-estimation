@@ -10,7 +10,9 @@ médias fenotípicas de forma filogeneticamente estruturada.
 Resumo do Modelo
 ----------------
 
-Dada um filogenia e um conjunto de medidas quantitativas, podemos escrever um modelo hierárquico para estimar médias e covariâncias entre as medidas utilizando aproximações gaussianas.
+Dada um filogenia e um conjunto de medidas quantitativas, podemos
+escrever um modelo hierárquico para estimar médias e covariâncias
+entre as medidas utilizando aproximações gaussianas.
 
 Passos do modelo:
 
@@ -33,4 +35,24 @@ Passos do modelo:
 4. Integração
     + Depois de montado o modelo, como produto de priors e verossimilhança, ele é integrado numericamente via monte carlo, tomando amostras de todos os parâmetros ($\theta, \sigma, \Theta, \Sigma$) seguindo a distribuição de probabilidade a posteriori
 5. A partir das amostras os parâmetros são estimados.
-5. PROFIT!
+6. PROFIT!
+
+Referências
+-----------
+
+A base do modelo é tratar as estimativas como uma sequencia de modelos
+hierárquicos aninhados na filogenia. As estimativas são todas
+gaussianas. Mesmo assim tem partes difíceis de estimar, relacionados
+com os priors das matrizes de covariância e os passos de monte carlo
+associados a elas. Cada passo deve conter uma matriz simétrica, e
+isso é difícil. É o velho problema de amostrar direito o espaço de
+matrizes positivas definidas.
+
+Básico:
+
+1. Modelos hierárquicos: Capítulos 5, 15, 19 do Bayesian Data Analysis
+2. MCMC e estimativas: Capítulos 10 a 14, especialmente do 14.6 em
+diante, onde tem a parte de covariâncias não uniformes e correlação.
+Com sorte a gente não vai precisar implementar essas técnicas na mão.
+
+
