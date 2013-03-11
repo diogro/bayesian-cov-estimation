@@ -55,4 +55,8 @@ Básico:
 diante, onde tem a parte de covariâncias não uniformes e correlação.
 Com sorte a gente não vai precisar implementar essas técnicas na mão.
 
+Pacotes
+-------
+
+- [PyMC](https://github.com/pymc-devs/pymc)
 
