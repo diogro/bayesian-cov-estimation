@@ -12,11 +12,11 @@ num_traits = 4
 root = t.seed_node
 
 theta = [pm.MvNormalCov('theta_0',
-                        mu=np.array(data.ix[:, 0:num_traits].mean()),
+                        mu=np.zeros(num_traits, float),
                         C=np.eye(num_traits)*10.)]
 
 sigma = [pm.WishartCov('sigma_0',
-                       n=num_leafs,
+                       n=num_traits+1,
                        C=np.eye(num_traits)*10.)]
 
 tree_idx = {str(root): 0}
