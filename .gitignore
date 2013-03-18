@@ -36,3 +36,4 @@ nosetests.xml
 
 # Images
 *.png
+monkey.data.csv
