@@ -107,27 +107,27 @@ sigma_D = pm.WishartCov('sigma_D',
                          value=np.eye(4))
 
 # Verossimilhancas dos terminais
-x_A = pm.MvNormalCov('x_A',
+data_A = pm.MvNormalCov('data_A',
                      theta_A,
                      sigma_A,
                      value=np.array(dados.ix[dados['especies']=='A', 0:4]),
                      observed=True)
-x_B = pm.MvNormalCov('x_B',
+data_B = pm.MvNormalCov('data_B',
                      theta_B,
                      sigma_B,
                      value=np.array(dados.ix[dados['especies']=='B', 0:4]),
                      observed=True)
-x_C = pm.MvNormalCov('x_C',
+data_C = pm.MvNormalCov('data_C',
                      theta_C,
                      sigma_C,
                      value=np.array(dados.ix[dados['especies']=='C', 0:4]),
                      observed=True)
-x_D = pm.MvNormalCov('x_D',
+data_D = pm.MvNormalCov('data_D',
                      theta_D,
                      sigma_D,
                      value=np.array(dados.ix[dados['especies']=='D', 0:4]),
                      observed=True)
-x_E = pm.MvNormalCov('x_E',
+data_E = pm.MvNormalCov('data_E',
                      theta_E,
                      sigma_E,
                      value=np.array(dados.ix[dados['especies']=='E', 0:4]),

@@ -12,12 +12,14 @@ num_traits = 4
 root = t.seed_node
 
 theta = [pm.MvNormalCov('theta_0',
-                        mu=np.zeros(num_traits, float),
-                        C=np.eye(num_traits)*10.)]
+                        mu=np.array(data.ix[:,0:num_traits].mean()),
+                        C=np.eye(num_traits)*10.,
+                        value=np.zeros(4))]
 
 sigma = [pm.WishartCov('sigma_0',
                        n=num_traits+1,
-                       C=np.eye(num_traits)*10.)]
+                       C=np.eye(num_traits)*10.,
+                       value=np.eye(4))]
 
 tree_idx = {str(root): 0}
 
@@ -26,12 +28,14 @@ for n in t.nodes()[1:]:
     parent_idx = tree_idx[str(n.parent_node)]
 
     theta.append(pm.MvNormalCov('theta_{}'.format(str(i)),
-                 mu=theta[parent_idx],
-                 C=sigma[parent_idx]))
+                                mu=theta[parent_idx],
+                                C=sigma[parent_idx],
+                                value=np.zeros(4)))
 
     sigma.append(pm.WishartCov('sigma_{}'.format(str(i)),
-                 n=num_leafs,
-                 C=sigma[parent_idx]))
+                               n=num_traits+1,
+                               C=sigma[parent_idx],
+                               value=np.eye(4)))
 
     tree_idx[str(n)] = len(theta) - 1
     i = i + 1
@@ -40,7 +44,7 @@ data_list = []
 for n in t.leaf_nodes():
     leaf_idx = tree_idx[str(n)]
     data_list.append(pm.MvNormalCov('data_{}'.format(n.taxon),
-                                    theta[leaf_idx],
-                                    sigma[leaf_idx],
+                                    mu=theta[leaf_idx],
+                                    C=sigma[leaf_idx],
                                     value=np.array(data.ix[data['especies'] == str(n.taxon), 0:num_traits]),
                                     observed=True))
