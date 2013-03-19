@@ -22,8 +22,19 @@ for (taxon in 1:length(models)){
     model.label = c(model.label, aux.label)
 }
 
-big.data = data.frame(distances, SUB=info$SPESUB, SEX=info$SEX, MSM=info$MSM, species,  MODEL = model.label, as.is=T)
+big.data = data.frame(distances, SUB=info$SPESUB, SEX=info$SEX, MSM=info$MSM, species)
 sex.mask = is.na(big.data$SEX)
+cpc.mask = (big.data$SUB == 'pygerythrus cynosuros')
+cta.mask = (big.data$SUB == 'torquatus atys')
+ggg.mask = (big.data$SUB == 'gorilla graueri')
+gggorila.mask = (big.data$SUB == 'gorilla gorilla')
+aab.mask = (big.data$SUB == 'azarai boliviensis')
+big.data$species = as.character(big.data$species)
+big.data$species[cpc.mask] = 'Chlorocebus pygerythrus cynosuros'
+big.data$species[cta.mask] = 'Cercocebus torquatus atys'
+big.data$species[ggg.mask] = 'Gorilla gorilla graueri'
+big.data$species[gggorila.mask] = 'Gorilla gorilla gorilla'
+big.data$species[aab.mask] = 'Aotus azarai boliviensis'
 big.data = big.data[!sex.mask,]
 write.csv(big.data, "monkey.data.csv", row.names=F)
 
