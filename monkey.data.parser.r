@@ -22,6 +22,8 @@ for (taxon in 1:length(models)){
     model.label = c(model.label, aux.label)
 }
 
-big.data = data.frame(distances, SUB=info$SUB, SEX=info$SEX, MSM=info$MSM, species,  MODEL = model.label)
+big.data = data.frame(distances, SUB=info$SPESUB, SEX=info$SEX, MSM=info$MSM, species,  MODEL = model.label, as.is=T)
+sex.mask = is.na(big.data$SEX)
+big.data = big.data[!sex.mask,]
 write.csv(big.data, "monkey.data.csv", row.names=F)
 
