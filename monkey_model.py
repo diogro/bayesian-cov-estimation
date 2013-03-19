@@ -40,33 +40,33 @@ for n in t.nodes()[1:]:
     tree_idx[str(n)] = len(theta) - 1
     i = i + 1
 
-models = {}
+sub_effects = {}
 for n in t.leaf_nodes():
-    sub_species = list(data.ix[data['species']==str(n.taxon),'SUB'])
-    models[str(n)] = [sub_species[1]]
-    for sub in sub_species[1:]:
-        if not (any(sub in s for s in models[str(n)])):
-            models[str(n)].append(sub)
+    sub_list = list(data.ix[data['species']==str(n.taxon),'SUB'])
+    sub_effects[str(n)] = [sub_list[1]]
+    for sub in sub_list[1:]:
+        if not (any(sub in s for s in sub_effects[str(n)])):
+            sub_effects[str(n)].append(sub)
+
+sex_effects = {}
+for n in t.leaf_nodes():
+    sex_list = list(data.ix[data['species']==str(n.taxon),'SEX'])
+    sex_effects[str(n)] = [sex_list[1]]
+    for sex in sex_list[1:]:
+        if not (any(sex in s for s in sex_effects[str(n)])):
+            sex_effects[str(n)].append(sex)
 
 data_list = []
 for n in t.leaf_nodes():
     leaf_idx = tree_idx[str(n)]
-    for sub in models[str(n)]:
-        theta.append(pm.MvNormalCov('theta_{}_{}_{}'.format(n.taxon, str(sub), 'M'),
-                                    mu=theta[leaf_idx],
-                                    C=sigma[leaf_idx],
-                                    value=np.zeros(num_traits)))
-        data_list.append(pm.MvNormalCov('data_{}_{}_{}'.format(n.taxon, str(sub), 'M'),
-                                        mu=theta[len(theta)-1],
+    for sub in sub_effects[str(n)]:
+        for sex in sex_effects[str(n)]:
+            theta.append(pm.MvNormalCov('theta_{}_{}_{}'.format(n.taxon, str(sub), sex),
+                                        mu=theta[leaf_idx],
                                         C=sigma[leaf_idx],
-                                        value=np.array(data.ix[(data['species'] == str(n.taxon)) & (data['SUB'] == sub) & (data['SEX'] == 'M'), 0:num_traits]),
-                                        observed=True))
-        theta.append(pm.MvNormalCov('theta_{}_{}_{}'.format(n.taxon, str(sub), 'F'),
-                                    mu=theta[leaf_idx],
-                                    C=sigma[leaf_idx],
-                                    value=np.zeros(num_traits)))
-        data_list.append(pm.MvNormalCov('data_{}_{}_{}'.format(n.taxon, str(sub), 'F'),
-                                        mu=theta[len(theta)-1],
-                                        C=sigma[leaf_idx],
-                                        value=np.array(data.ix[(data['species'] == str(n.taxon)) & (data['SUB'] == sub) & (data['SEX'] == 'F'), 0:num_traits]),
-                                        observed=True))
+                                        value=np.zeros(num_traits)))
+            data_list.append(pm.MvNormalCov('data_{}_{}_{}'.format(n.taxon, str(sub), sex),
+                                            mu=theta[len(theta)-1],
+                                            C=sigma[leaf_idx],
+                                            value=np.array(data.ix[(data['species'] == str(n.taxon)) & (data['SUB'] == sub) & (data['SEX'] == sex), 0:num_traits]),
+                                            observed=True))
