@@ -5,7 +5,7 @@ import dendropy
 
 data = pd.read_csv("./monkey.data.csv")
 
-t = dendropy.Tree.get_from_path("./monkey.tree.nw", "newick")
+t = dendropy.Tree.get_from_path("./nwm.tree.nw", "newick")
 num_leafs = len(t.leaf_nodes())
 num_traits = 39
 

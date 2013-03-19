@@ -37,4 +37,3 @@ big.data$species[gggorila.mask] = 'Gorilla gorilla gorilla'
 big.data$species[aab.mask] = 'Aotus azarai boliviensis'
 big.data = big.data[!sex.mask,]
 write.csv(big.data, "monkey.data.csv", row.names=F)
-
