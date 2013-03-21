@@ -63,7 +63,7 @@ for n in t.leaf_nodes():
         for sex in sex_effects[str(n)]:
             theta.append(pm.MvNormalCov('theta_{}_{}_{}'.format(n.taxon, str(sub), sex),
                                         mu=theta[leaf_idx],
-                                        C=sigma[leaf_idx],
+                                        C=np.eye(num_traits),
                                         value=np.zeros(num_traits)))
             data_list.append(pm.MvNormalCov('data_{}_{}_{}'.format(n.taxon, str(sub), sex),
                                             mu=theta[len(theta)-1],
