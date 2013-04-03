@@ -1,9 +1,9 @@
 load ("~/Dropbox/labbio/cov_bayes_data/monkeys.RData")
 source("~/projects/lemusp-r/matrix.func.r")
 
-raw.cov = scan("~/Dropbox/labbio/cov_bayes_data/nwm.b.matrix.cov.bayes.csv", character())
-raw.means = scan("~/Dropbox/labbio/cov_bayes_data/nwm.b.matrix.means.bayes.csv", character())
-cov.names = scan("~/Dropbox/labbio/cov_bayes_data/nwm.names.txt", character())
+raw.cov = scan("~/Dropbox/labbio/cov_bayes_data/small.nwm.matrix.cov.bayes.csv", character())
+raw.means = scan("~/Dropbox/labbio/cov_bayes_data/small.nwm.matrix.means.bayes.csv", character())
+cov.names = scan("~/Dropbox/labbio/cov_bayes_data/small.nwm.names.txt", character())
 
 cov.bayes = list()
 means.bayes = list()
