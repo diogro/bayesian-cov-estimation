@@ -3,29 +3,42 @@ import numpy as np
 import pymc as pm
 import dendropy
 
+t = dendropy.Tree.get_from_path("./small.nwm.tree.nw", "newick")
+num_leafs = len(t.leaf_nodes())
+num_traits = 39
+
 data = pd.read_csv("./monkey.data.csv")
 raw_matrices = pd.read_csv("./monkey.matrices.csv")
 with open('monkey.matrices.labels.txt') as f:
     monkey_labels = f.read().splitlines()
 
-num_traits = 39
 node_matrices = {monkey_labels[0]: np.array(raw_matrices.ix[0:num_traits-1, ])}
 node_sample_size = {monkey_labels[0]: sum(data['species'] == monkey_labels[1])}
 for i in range(1, len(monkey_labels)):
     node_matrices[monkey_labels[i]] = np.array(raw_matrices.ix[i*num_traits:(((i+1)*num_traits)-1), :])
     node_sample_size[monkey_labels[i]] = sum(data['species'] == monkey_labels[i])
 
+for i in range(len(monkey_labels)):
+    if(t.find_node_with_taxon_label(monkey_labels[i]) is not None):
+        new_key = str(t.find_node_with_taxon_label(monkey_labels[i]))
+        node_matrices[new_key] = node_matrices.pop(monkey_labels[i])
+        node_sample_size[new_key] = node_sample_size.pop(monkey_labels[i])
+    else:
+        node_matrices.pop(monkey_labels[i])
 
-def matrix_mean(label_1, label_2):
-    matrix_1 = node_matrices[label_1]
-    matrix_2 = node_matrices[label_2]
-    sample_1 = node_sample_size[label_1]
-    sample_2 = node_sample_size[label_2]
-    mean_mat = (matrix_1*sample_1 + matrix_2*sample_2) / (sample_1 + sample_2)
-    return mean_mat, (sample_1 + sample_2)
 
-t = dendropy.Tree.get_from_path("./small.nwm.tree.nw", "newick")
-num_leafs = len(t.leaf_nodes())
+def matrix_mean(child_labels):
+    new_matrix = node_sample_size[str(child_labels[1])]*node_matrices[str(child_labels[1])]
+    sample = node_sample_size[str(child_labels[1])]
+    for i in range(1, len(child_labels)):
+        new_matrix = new_matrix + node_sample_size[str(child_labels[i])]*node_matrices[str(child_labels[i])]
+        sample = sample + node_sample_size[str(child_labels[1])]
+    return new_matrix/sample, sample
+
+
+for n in t.postorder_node_iter():
+    if ((str(n) in node_matrices)==False):
+        node_matrices[str(n)], node_sample_size[str(n)] = matrix_mean(n.child_nodes())
 
 root = t.seed_node
 
