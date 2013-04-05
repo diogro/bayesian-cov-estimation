@@ -12,11 +12,15 @@ raw_matrices = pd.read_csv("./monkey.matrices.csv")
 with open('monkey.matrices.labels.txt') as f:
     monkey_labels = f.read().splitlines()
 
+# Lendo matrizes ML pra todo mundo, junto com tamanhos amostrais
+
 node_matrices = {monkey_labels[0]: np.array(raw_matrices.ix[0:num_traits-1, ])}
 node_sample_size = {monkey_labels[0]: sum(data['species'] == monkey_labels[1])}
 for i in range(1, len(monkey_labels)):
     node_matrices[monkey_labels[i]] = np.array(raw_matrices.ix[i*num_traits:(((i+1)*num_traits)-1), :])
     node_sample_size[monkey_labels[i]] = sum(data['species'] == monkey_labels[i])
+
+# Tirando quem nao esta na filogenia e trocando os keys
 
 for i in range(len(monkey_labels)):
     if(t.find_node_with_taxon_label(monkey_labels[i]) is not None):
@@ -26,6 +30,7 @@ for i in range(len(monkey_labels)):
     else:
         node_matrices.pop(monkey_labels[i])
 
+# Funcao que recebe uma lista de filhos e calcula a matriz media pro no interno
 
 def matrix_mean(child_labels):
     new_matrix = node_sample_size[str(child_labels[1])]*node_matrices[str(child_labels[1])]
@@ -35,10 +40,13 @@ def matrix_mean(child_labels):
         sample = sample + node_sample_size[str(child_labels[1])]
     return new_matrix/sample, sample
 
+# Calculando as matrizes e tamanhos amostrais para todos os nodes
 
 for n in t.postorder_node_iter():
     if ((str(n) in node_matrices)==False):
         node_matrices[str(n)], node_sample_size[str(n)] = matrix_mean(n.child_nodes())
+
+# Agora comeca o PyMC
 
 root = t.seed_node
 
