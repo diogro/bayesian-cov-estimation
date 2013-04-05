@@ -37,6 +37,7 @@ nosetests.xml
 # Images
 *.png
 monkey.data.csv
+monkey.matrices.csv
 *.txt
 *.pickle
 *.plain

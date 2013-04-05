@@ -1,4 +1,4 @@
-load ("~/Dropbox/monkeys.RData")
+load ("~/Dropbox/labbio/cov_bayes_data/monkeys.RData")
 
 models = c()
 for ( i in 1:length(main.data)){
@@ -37,3 +37,14 @@ big.data$species[gggorila.mask] = 'Gorilla gorilla gorilla'
 big.data$species[aab.mask] = 'Aotus azarai boliviensis'
 big.data = big.data[!sex.mask,]
 write.csv(big.data, "monkey.data.csv", row.names=F)
+
+clade.names = sub("_", " ", names(main.data))
+monkey.matrices = array(dim=c(39*length(clade.names), 39))
+colnames(monkey.matrices) = colnames((main.data[[1]])$ed.cov)
+for (i in 1:length(clade.names)){
+    lower = ((i-1)*39)+1
+    upper = (i*39)
+    monkey.matrices[lower:upper,] = (main.data[[i]])$ed.cov
+}
+write.csv(monkey.matrices, "./monkey.matrices.csv", row.names=F)
+write.table(clade.names, "monkey.matrices.labels.txt", row.names=F, col.names=F)
