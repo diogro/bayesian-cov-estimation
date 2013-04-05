@@ -4,10 +4,19 @@ import pymc as pm
 import dendropy
 
 data = pd.read_csv("./monkey.data.csv")
+raw_matrices = pd.read_csv("./monkey.matrices.csv")
+with open('monkey.matrices.labels.txt') as f:
+    monkey_labels = f.read().splitlines()
+
+num_traits = 39
+node_matrices = {monkey_labels[0]: np.array(raw_matrices.ix[0:num_traits-1,])}
+node_sample_size = {monkey_labels[0]: sum(data['species'] == monkey_labels[1])}
+for i in range(1, len(monkey_labels)):
+    node_matrices[monkey_labels[i]] = np.array(raw_matrices.ix[i*num_traits:(((i+1)*num_traits)-1),:])
+    node_sample_size[monkey_labels[i]] = sum(data['species'] == monkey_labels[i])
 
 t = dendropy.Tree.get_from_path("./small.nwm.tree.nw", "newick")
 num_leafs = len(t.leaf_nodes())
-num_traits = 39
 
 root = t.seed_node
 
