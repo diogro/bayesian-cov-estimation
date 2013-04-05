@@ -9,11 +9,20 @@ with open('monkey.matrices.labels.txt') as f:
     monkey_labels = f.read().splitlines()
 
 num_traits = 39
-node_matrices = {monkey_labels[0]: np.array(raw_matrices.ix[0:num_traits-1,])}
+node_matrices = {monkey_labels[0]: np.array(raw_matrices.ix[0:num_traits-1, ])}
 node_sample_size = {monkey_labels[0]: sum(data['species'] == monkey_labels[1])}
 for i in range(1, len(monkey_labels)):
-    node_matrices[monkey_labels[i]] = np.array(raw_matrices.ix[i*num_traits:(((i+1)*num_traits)-1),:])
+    node_matrices[monkey_labels[i]] = np.array(raw_matrices.ix[i*num_traits:(((i+1)*num_traits)-1), :])
     node_sample_size[monkey_labels[i]] = sum(data['species'] == monkey_labels[i])
+
+
+def matrix_mean(label_1, label_2):
+    matrix_1 = node_matrices[label_1]
+    matrix_2 = node_matrices[label_2]
+    sample_1 = node_sample_size[label_1]
+    sample_2 = node_sample_size[label_2]
+    mean_mat = (matrix_1*sample_1 + matrix_2*sample_2) / (sample_1 + sample_2)
+    return mean_mat, (sample_1 + sample_2)
 
 t = dendropy.Tree.get_from_path("./small.nwm.tree.nw", "newick")
 num_leafs = len(t.leaf_nodes())
@@ -21,7 +30,7 @@ num_leafs = len(t.leaf_nodes())
 root = t.seed_node
 
 theta = [pm.MvNormalCov('theta_0',
-                        mu=np.array(data.ix[:,0:num_traits].mean()),
+                        mu=np.array(data.ix[:, 0:num_traits].mean()),
                         C=np.eye(num_traits)*10.,
                         value=np.zeros(num_traits))]
 
@@ -49,21 +58,19 @@ for n in t.nodes()[1:]:
     tree_idx[str(n)] = len(theta) - 1
     i = i + 1
 
-sub_effects = {}
-for n in t.leaf_nodes():
-    sub_list = list(data.ix[data['species']==str(n.taxon),'SUB'])
-    sub_effects[str(n)] = [sub_list[1]]
-    for sub in sub_list[1:]:
-        if not (any(sub in s for s in sub_effects[str(n)])):
-            sub_effects[str(n)].append(sub)
 
-sex_effects = {}
-for n in t.leaf_nodes():
-    sex_list = list(data.ix[data['species']==str(n.taxon),'SEX'])
-    sex_effects[str(n)] = [sex_list[1]]
-    for sex in sex_list[1:]:
-        if not (any(sex in s for s in sex_effects[str(n)])):
-            sex_effects[str(n)].append(sex)
+def fixed_effect(effect):
+    factor_effects = {}
+    for n in t.leaf_nodes():
+        factor_list = list(data.ix[data['species'] == str(n.taxon), effect])
+        factor_effects[str(n)] = [factor_list[1]]
+        for factor in factor_list[1:]:
+            if not (any(factor in s for s in factor_effects[str(n)])):
+                factor_effects[str(n)].append(factor)
+    return factor_effects
+
+sub_effects = fixed_effect('SUB')
+sex_effects = fixed_effect('SEX')
 
 data_list = []
 for n in t.leaf_nodes():
