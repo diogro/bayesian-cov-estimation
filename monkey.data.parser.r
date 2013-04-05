@@ -47,4 +47,5 @@ for (i in 1:length(clade.names)){
     monkey.matrices[lower:upper,] = (main.data[[i]])$ed.cov
 }
 write.csv(monkey.matrices, "./monkey.matrices.csv", row.names=F)
-write.table(clade.names, "monkey.matrices.labels.txt", row.names=F, col.names=F)
+clade.names = sub("cynosurus", "cynosuros", names(main.data))
+write.table(clade.names, "monkey.matrices.labels.txt", row.names=F, col.names=F, quote=F)
