@@ -30,20 +30,24 @@ for i in range(len(monkey_labels)):
     else:
         node_matrices.pop(monkey_labels[i])
 
-# Funcao que recebe uma lista de filhos e calcula a matriz media pro no interno
+# Funcao que recebe uma lista de filhos e calcula a matriz media pro parent
+# node
+
 
 def matrix_mean(child_labels):
     new_matrix = node_sample_size[str(child_labels[0])]*node_matrices[str(child_labels[0])]
     sample = node_sample_size[str(child_labels[0])]
     for i in range(1, len(child_labels)):
-        new_matrix = new_matrix + node_sample_size[str(child_labels[i])]*node_matrices[str(child_labels[i])]
+        new_matrix = new_matrix + node_sample_size[str(child_labels[i])] * node_matrices[str(child_labels[i])]
         sample = sample + node_sample_size[str(child_labels[i])]
+    new_matrix = new_matrix/sample
+    new_matrix = np.tril(new_matrix) + np.tril(new_matrix, k=-1).transpose()
     return new_matrix/sample, sample
 
 # Calculando as matrizes e tamanhos amostrais para todos os nodes
 
 for n in t.postorder_node_iter():
-    if ((str(n) in node_matrices)==False):
+    if ((str(n) in node_matrices) is False):
         node_matrices[str(n)], node_sample_size[str(n)] = matrix_mean(n.child_nodes())
 
 # Agora comeca o PyMC
@@ -52,7 +56,7 @@ root = t.seed_node
 
 theta = [pm.MvNormalCov('theta_0',
                         mu=np.array(data.ix[:, 0:num_traits].mean()),
-                        C=np.eye(num_traits)*10.,
+                        C=np.eye(num_traits)*1.,
                         value=np.zeros(num_traits))]
 
 sigma = [pm.WishartCov('sigma_0',
@@ -105,5 +109,7 @@ for n in t.leaf_nodes():
             data_list.append(pm.MvNormalCov('data_{}_{}_{}'.format(n.taxon, str(sub), sex),
                                             mu=theta[len(theta)-1],
                                             C=sigma[leaf_idx],
-                                            value=np.array(data.ix[(data['species'] == str(n.taxon)) & (data['SUB'] == sub) & (data['SEX'] == sex), 0:num_traits]),
+                                            value=np.array(data.ix[(data['species'] == str(n.taxon)) &
+                                                                   (data['SUB'] == sub) &
+                                                                   (data['SEX'] == sex), 0:num_traits]),
                                             observed=True))
