@@ -48,4 +48,6 @@ for (i in 1:length(clade.names)){
 }
 write.csv(monkey.matrices, "./monkey.matrices.csv", row.names=F)
 clade.names = sub("cynosurus", "cynosuros", names(main.data))
+clade.names = sub("_", " ", clade.names)
+clade.names = sub("_", " ", clade.names)
 write.table(clade.names, "monkey.matrices.labels.txt", row.names=F, col.names=F, quote=F)

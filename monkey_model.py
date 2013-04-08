@@ -33,11 +33,11 @@ for i in range(len(monkey_labels)):
 # Funcao que recebe uma lista de filhos e calcula a matriz media pro no interno
 
 def matrix_mean(child_labels):
-    new_matrix = node_sample_size[str(child_labels[1])]*node_matrices[str(child_labels[1])]
-    sample = node_sample_size[str(child_labels[1])]
+    new_matrix = node_sample_size[str(child_labels[0])]*node_matrices[str(child_labels[0])]
+    sample = node_sample_size[str(child_labels[0])]
     for i in range(1, len(child_labels)):
         new_matrix = new_matrix + node_sample_size[str(child_labels[i])]*node_matrices[str(child_labels[i])]
-        sample = sample + node_sample_size[str(child_labels[1])]
+        sample = sample + node_sample_size[str(child_labels[i])]
     return new_matrix/sample, sample
 
 # Calculando as matrizes e tamanhos amostrais para todos os nodes
