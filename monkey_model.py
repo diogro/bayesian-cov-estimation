@@ -17,7 +17,9 @@ with open('monkey.matrices.labels.txt') as f:
 node_matrices = {monkey_labels[0]: np.array(raw_matrices.ix[0:num_traits-1, ])}
 node_sample_size = {monkey_labels[0]: sum(data['species'] == monkey_labels[1])}
 for i in range(1, len(monkey_labels)):
-    node_matrices[monkey_labels[i]] = np.array(raw_matrices.ix[i*num_traits:(((i+1)*num_traits)-1), :])
+    new_matrix = np.array(raw_matrices.ix[i*num_traits:(((i+1)*num_traits)-1), :])
+    new_matrix = np.tril(new_matrix) + np.tril(new_matrix, k=-1).transpose()
+    node_matrices[monkey_labels[i]] = new_matrix
     node_sample_size[monkey_labels[i]] = sum(data['species'] == monkey_labels[i])
 
 # Tirando quem nao esta na filogenia e trocando os keys
@@ -29,6 +31,7 @@ for i in range(len(monkey_labels)):
         node_sample_size[new_key] = node_sample_size.pop(monkey_labels[i])
     else:
         node_matrices.pop(monkey_labels[i])
+        node_sample_size.pop(monkey_labels[i])
 
 # Funcao que recebe uma lista de filhos e calcula a matriz media pro parent
 # node
@@ -38,11 +41,12 @@ def matrix_mean(child_labels):
     new_matrix = node_sample_size[str(child_labels[0])]*node_matrices[str(child_labels[0])]
     sample = node_sample_size[str(child_labels[0])]
     for i in range(1, len(child_labels)):
-        new_matrix = new_matrix + node_sample_size[str(child_labels[i])] * node_matrices[str(child_labels[i])]
+        new_matrix = new_matrix +\
+                node_sample_size[str(child_labels[i])] * node_matrices[str(child_labels[i])]
         sample = sample + node_sample_size[str(child_labels[i])]
     new_matrix = new_matrix/sample
-    new_matrix = np.tril(new_matrix) + np.tril(new_matrix, k=-1).transpose()
-    return new_matrix/sample, sample
+    #new_matrix = np.tril(new_matrix) + np.tril(new_matrix, k=-1).transpose()
+    return new_matrix, sample
 
 # Calculando as matrizes e tamanhos amostrais para todos os nodes
 
@@ -56,7 +60,8 @@ root = t.seed_node
 
 theta = [pm.MvNormalCov('theta_0',
                         mu=np.array(data.ix[:, 0:num_traits].mean()),
-                        C=np.eye(num_traits)*1.,
+                        #mu=np.zeros(num_traits),
+                        C=np.eye(num_traits)*10.,
                         value=np.zeros(num_traits))]
 
 sigma = [pm.WishartCov('sigma_0',
