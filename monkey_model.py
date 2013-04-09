@@ -15,6 +15,10 @@ with open('monkey.matrices.labels.txt') as f:
 
 # Lendo matrizes ML pra todo mundo, junto com tamanhos amostrais
 
+def make_symetric(matrix):
+    matrix = np.tril(matrix) + np.tril(matrix, k=-1).transpose()
+    return matrix
+
 node_matrices = {monkey_labels[0]: np.array(raw_matrices.ix[0:num_traits-1, ])}
 node_sample_size = {monkey_labels[0]: sum(data['species'] == monkey_labels[1])}
 for i in range(1, len(monkey_labels)):
@@ -30,7 +34,7 @@ for i in range(len(monkey_labels)):
         new_key = str(t.find_node_with_taxon_label(monkey_labels[i]))
         node_sample_size[new_key] = node_sample_size.pop(monkey_labels[i])
         if( node_sample_size[new_key] < 60):
-            node_matrices[new_key] = nc.noise_control(node_matrices.pop(monkey_labels[i]))
+            node_matrices[new_key] = make_symetric(nc.noise_control(node_matrices.pop(monkey_labels[i])))
         else:
             node_matrices[new_key] = node_matrices.pop(monkey_labels[i])
     else:
@@ -63,8 +67,8 @@ for n in t.postorder_node_iter():
 root = t.seed_node
 
 theta = [pm.MvNormalCov('theta_0',
-                        mu=np.array(data.ix[:, 0:num_traits].mean()),
-                        #mu=np.zeros(num_traits),
+                        #mu=np.array(data.ix[:, 0:num_traits].mean()),
+                        mu=np.zeros(num_traits),
                         C=np.eye(num_traits)*10.,
                         value=np.zeros(num_traits))]
 
