@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import pymc as pm
+import noise_control as nc
 import dendropy
 
 t = dendropy.Tree.get_from_path("./small.nwm.tree.nw", "newick")
@@ -27,8 +28,11 @@ for i in range(1, len(monkey_labels)):
 for i in range(len(monkey_labels)):
     if(t.find_node_with_taxon_label(monkey_labels[i]) is not None):
         new_key = str(t.find_node_with_taxon_label(monkey_labels[i]))
-        node_matrices[new_key] = node_matrices.pop(monkey_labels[i])
         node_sample_size[new_key] = node_sample_size.pop(monkey_labels[i])
+        if( node_sample_size[new_key] < 60):
+            node_matrices[new_key] = nc.noise_control(node_matrices.pop(monkey_labels[i]))
+        else:
+            node_matrices[new_key] = node_matrices.pop(monkey_labels[i])
     else:
         node_matrices.pop(monkey_labels[i])
         node_sample_size.pop(monkey_labels[i])
