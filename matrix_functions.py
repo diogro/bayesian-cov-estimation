@@ -42,3 +42,18 @@ def random_skewers(Matrix1, Matrix2):
         rs += cos_angle(delta_z1[:, i], delta_z2[:, i])
     rs = rs / n_vector
     return rs
+
+
+def matrix_correlation(Matrix1, Matrix2):
+    n_vector = 1000
+    tr = Matrix1.shape[0]
+    rand_vec = np.random.multivariate_normal(np.zeros(tr),
+                                             np.identity(tr, float),
+                                             n_vector).T
+    delta_z1 = np.dot(Matrix1, rand_vec)
+    delta_z2 = np.dot(Matrix2, rand_vec)
+    rs = 0.
+    for i in xrange(n_vector):
+        rs += cos_angle(delta_z1[:, i], delta_z2[:, i])
+    rs = rs / n_vector
+    return rs
