@@ -100,13 +100,13 @@ for n in t.nodes()[1:]:
 def mk_fixed_effects(effects):
     factor_effects = {}
     for n in t.leaf_nodes():
-       factor_effects[str(n)] = mk(n, effects[0], effects[1:])
+        factor_effects[str(n)] = mk(n, effects[0], effects[1:])
     return factor_effects
 
 def mk(s, e0, es):
     filtered = set(data.ix[data['species'] == str(s.taxon), e0])
     if len(es) < 1:
-        return list(filtered)
+        return {k: {} for k in filtered}
     else:
         return {k: mk(s, es[0], es[1:] if len(es) > 1 else []) for k in filtered}
 
@@ -114,10 +114,25 @@ data_list = []
 
 effects_tree = mk_fixed_effects(effects)
 
-#for n in t.leaf_nodes():
-#    leaf_idx = tree_idx[str(n)]
-#
-##    for e in effects.keys():
+def tree_flattening(tree):
+    tree_list = []
+    
+    def tf(t, lpart, lresult):
+        if not t.items():
+            lresult.append(lpart)
+        else:
+            map (lambda k: tf(t[k], lpart + [k], lresult), t.keys())
+    
+    tf(tree, [], tree_list)
+    return tree_list
+
+flat_effects_tree = tree_flattening(effects_tree)
+
+for n in t.leaf_nodes():
+    leaf_idx = tree_idx[str(n)]
+
+    if effects_tree[str(n)] and len(effects_tree[str(n)]) > 1:
+        
 ##        if len(effects[e]) > 1:
 #
 #
