@@ -100,13 +100,11 @@ for n in t.nodes()[1:]:
 def mk_fixed_effects(effects):
     factor_effects = {}
     for n in t.leaf_nodes():
-       print effects[0], effects[1:], str(n)
        factor_effects[str(n)] = mk(n, effects[0], effects[1:])
     return factor_effects
 
 def mk(s, e0, es):
     filtered = set(data.ix[data['species'] == str(s.taxon), e0])
-    print filtered
     if len(es) < 1:
         return list(filtered)
     else:
