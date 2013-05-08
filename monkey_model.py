@@ -128,24 +128,41 @@ def tree_flattening(tree):
 
 flat_effects_tree = tree_flattening(effects_tree)
 
+
+def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=False):
+    paths = reduce(lambda x,y: "{}_{}".format(x,y), path)
+
+    if not node.items():
+        data_list.append(pm.MvNormalCov('data_{}'.format(paths),
+                                mu=theta[parent_idx],
+                                C=sigma[parent_idx],
+                                value=np.array(data.ix[(data['species'] == str(n.taxon)) &
+                                  reduce(operator.iand, 
+                                         map(lambda s: data[s[0]] == s[1], 
+                                             zip(effects, path[1:]))), 0:num_traits]),
+                                observed=True))
+        return
+    else:
+        if has_siblings: 
+            theta.append(pm.MvNormalCov('theta_{}'.format(paths),
+                                    mu=theta[parent_idx],
+                                    C=np.eye(num_traits),
+                                    value=np.zeros(num_traits)))
+            sigma.append(pm.WishartCov('sigma_{}'.format(paths),
+                                   n=num_traits+1,
+                                   C=sigma[parent_idx],
+                                   value=node_matrices[species]))
+    
+            parent_idx += 1
+            tree_idx[node_name] = parent_idx
+
+    has_siblings = len(node.keys()) > 1 
+    for k in node.keys():
+        mk_node(species, k, node[k], parent_idx, effects, path + [k], has_siblings) 
+
+
 for n in t.leaf_nodes():
     leaf_idx = tree_idx[str(n)]
-
-    if effects_tree[str(n)] and len(effects_tree[str(n)]) > 1:
-        
-##        if len(effects[e]) > 1:
-#
-#
-#    for sub in sub_effects[str(n)]:
-#        for sex in sex_effects[str(n)]:
-#            theta.append(pm.MvNormalCov('theta_{}_{}_{}'.format(n.taxon, str(sub), sex),
-#                                        mu=theta[leaf_idx],
-#                                        C=np.eye(num_traits),
-#                                        value=np.zeros(num_traits)))
-#            data_list.append(pm.MvNormalCov('data_{}_{}_{}'.format(n.taxon, str(sub), sex),
-#                                            mu=theta[len(theta)-1],
-#                                            C=sigma[leaf_idx],
-#                                            value=np.array(data.ix[(data['species'] == str(n.taxon)) &
-#                                                                   (data['SUB'] == sub) &
-#                                                                   (data['SEX'] == sex), 0:num_traits]),
-#                                            observed=True))
+    path = [str(n)]
+    has_siblings = effects_tree[str(n)] and len(effects_tree[str(n)]) > 1
+    mk_node(str(n), str(n), effects_tree[str(n)], leaf_idx, effects, path, has_siblings) 
