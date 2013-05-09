@@ -4,7 +4,6 @@ import pymc as pm
 import noise_control as nc
 import dendropy
 import operator
-from collections import OrderedDict
 
 t = dendropy.Tree.get_from_path("./small.nwm.tree.nw", "newick")
 num_leafs = len(t.leaf_nodes())
@@ -17,6 +16,7 @@ with open('monkey.matrices.labels.txt') as f:
     monkey_labels = f.read().splitlines()
 
 # Lendo matrizes ML pra todo mundo, junto com tamanhos amostrais
+
 
 def make_symetric(matrix):
     matrix = np.tril(matrix) + np.tril(matrix, k=-1).transpose()
@@ -52,7 +52,7 @@ def matrix_mean(child_labels):
     sample = node_sample_size[str(child_labels[0])]
     for i in range(1, len(child_labels)):
         new_matrix = new_matrix +\
-                node_sample_size[str(child_labels[i])] * node_matrices[str(child_labels[i])]
+            node_sample_size[str(child_labels[i])] * node_matrices[str(child_labels[i])]
         sample = sample + node_sample_size[str(child_labels[i])]
     new_matrix = make_symetric(new_matrix/sample)
     return new_matrix, sample
@@ -97,11 +97,13 @@ for n in t.nodes()[1:]:
     tree_idx[str(n)] = len(theta) - 1
     i = i + 1
 
+
 def mk_fixed_effects(effects):
     factor_effects = {}
     for n in t.leaf_nodes():
         factor_effects[str(n)] = mk(n, effects[0], effects[1:])
     return factor_effects
+
 
 def mk(s, e0, es):
     filtered = set(data.ix[data['species'] == str(s.taxon), e0])
@@ -114,15 +116,16 @@ data_list = []
 
 effects_tree = mk_fixed_effects(effects)
 
+
 def tree_flattening(tree):
     tree_list = []
-    
+
     def tf(t, lpart, lresult):
         if not t.items():
             lresult.append(lpart)
         else:
-            map (lambda k: tf(t[k], lpart + [k], lresult), t.keys())
-    
+            map(lambda k: tf(t[k], lpart + [k], lresult), t.keys())
+
     tf(tree, [], tree_list)
     return tree_list
 
@@ -130,39 +133,39 @@ flat_effects_tree = tree_flattening(effects_tree)
 
 
 def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=False):
-    paths = reduce(lambda x,y: "{}_{}".format(x,y), path)
+    paths = reduce(lambda x, y: "{}_{}".format(x, y), path)
 
     if not node.items():
         data_list.append(pm.MvNormalCov('data_{}'.format(paths),
-                                mu=theta[parent_idx],
-                                C=sigma[parent_idx],
-                                value=np.array(data.ix[(data['species'] == str(n.taxon)) &
-                                  reduce(operator.iand, 
-                                         map(lambda s: data[s[0]] == s[1], 
-                                             zip(effects, path[1:]))), 0:num_traits]),
-                                observed=True))
+                                        mu=theta[parent_idx],
+                                        C=sigma[parent_idx],
+                                        value=np.array(data.ix[(data['species'] == str(n.taxon)) &
+                                                               reduce(operator.iand,
+                                                                      map(lambda s: data[s[0]] == s[1],
+                                                                          zip(effects, path[1:]))), 0:num_traits]),
+                                        observed=True))
         return
     else:
-        if has_siblings: 
+        if has_siblings:
             theta.append(pm.MvNormalCov('theta_{}'.format(paths),
-                                    mu=theta[parent_idx],
-                                    C=np.eye(num_traits),
-                                    value=np.zeros(num_traits)))
+                                        mu=theta[parent_idx],
+                                        C=np.eye(num_traits),
+                                        value=np.zeros(num_traits)))
             sigma.append(pm.WishartCov('sigma_{}'.format(paths),
-                                   n=num_traits+1,
-                                   C=sigma[parent_idx],
-                                   value=node_matrices[species]))
-    
+                                       n=num_traits+1,
+                                       C=sigma[parent_idx],
+                                       value=node_matrices[species]))
+
             parent_idx += 1
             tree_idx[node_name] = parent_idx
 
-    has_siblings = len(node.keys()) > 1 
+    has_siblings = len(node.keys()) > 1
     for k in node.keys():
-        mk_node(species, k, node[k], parent_idx, effects, path + [k], has_siblings) 
+        mk_node(species, k, node[k], parent_idx, effects, path + [k], has_siblings)
 
 
 for n in t.leaf_nodes():
     leaf_idx = tree_idx[str(n)]
     path = [str(n)]
     has_siblings = effects_tree[str(n)] and len(effects_tree[str(n)]) > 1
-    mk_node(str(n), str(n), effects_tree[str(n)], leaf_idx, effects, path, has_siblings) 
+    mk_node(str(n), str(n), effects_tree[str(n)], leaf_idx, effects, path, has_siblings)
