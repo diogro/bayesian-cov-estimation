@@ -135,6 +135,19 @@ flat_effects_tree = tree_flattening(effects_tree)
 def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=False):
     paths = reduce(lambda x, y: "{}_{}".format(x, y), path)
 
+    if has_siblings:
+        theta.append(pm.MvNormalCov('theta_{}'.format(paths),
+                                    mu=theta[parent_idx],
+                                    C=np.eye(num_traits),
+                                    value=np.zeros(num_traits)))
+        sigma.append(pm.WishartCov('sigma_{}'.format(paths),
+                                   n=num_traits+1,
+                                   C=sigma[parent_idx],
+                                   value=node_matrices[species]))
+
+        tree_idx[node_name] = len(theta) - 1 
+        parent_idx = len(theta) - 1
+
     if not node.items():
         data_list.append(pm.MvNormalCov('data_{}'.format(paths),
                                         mu=theta[parent_idx],
@@ -145,20 +158,7 @@ def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=Fa
                                                                           zip(effects, path[1:]))), 0:num_traits]),
                                         observed=True))
         return
-    else:
-        if has_siblings:
-            theta.append(pm.MvNormalCov('theta_{}'.format(paths),
-                                        mu=theta[parent_idx],
-                                        C=np.eye(num_traits),
-                                        value=np.zeros(num_traits)))
-            sigma.append(pm.WishartCov('sigma_{}'.format(paths),
-                                       n=num_traits+1,
-                                       C=sigma[parent_idx],
-                                       value=node_matrices[species]))
-
-            parent_idx += 1
-            tree_idx[node_name] = parent_idx
-
+ 
     has_siblings = len(node.keys()) > 1
     for k in node.keys():
         mk_node(species, k, node[k], parent_idx, effects, path + [k], has_siblings)
