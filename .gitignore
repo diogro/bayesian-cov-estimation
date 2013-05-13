@@ -44,3 +44,5 @@ monkey.matrices.csv
 *.txt
 *.pickle
 *.plain
+
+.ipynb_checkpoints/
