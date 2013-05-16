@@ -133,7 +133,7 @@ flat_effects_tree = tree_flattening(effects_tree)
 
 
 def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=False):
-    paths = reduce(lambda x, y: "{}_{}".format(x, y), path)
+    paths = reduce(lambda x, y: "{}__{}".format(x, y).replace(' ', '_'), path)
 
     if has_siblings:
         theta.append(pm.MvNormalCov('theta_{}'.format(paths),
@@ -166,6 +166,6 @@ def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=Fa
 
 for n in t.leaf_nodes():
     leaf_idx = tree_idx[str(n)]
-    path = [str(n)]
+    path = [str(n.taxon)]
     has_siblings = effects_tree[str(n)] and len(effects_tree[str(n)]) > 1
     mk_node(str(n), str(n), effects_tree[str(n)], leaf_idx, effects, path, has_siblings)
