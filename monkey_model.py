@@ -113,6 +113,7 @@ def mk(s, e0, es):
         return {k: mk(s, es[0], es[1:] if len(es) > 1 else []) for k in filtered}
 
 data_list = []
+data_sim_list = []
 
 effects_tree = mk_fixed_effects(effects)
 
@@ -145,7 +146,7 @@ def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=Fa
                                    C=sigma[parent_idx],
                                    value=node_matrices[species]))
 
-        tree_idx[node_name] = len(theta) - 1 
+        tree_idx[node_name] = len(theta) - 1
         parent_idx = len(theta) - 1
 
     if not node.items():
@@ -157,8 +158,15 @@ def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=Fa
                                                                       map(lambda s: data[s[0]] == s[1],
                                                                           zip(effects, path[1:]))), 0:num_traits]),
                                         observed=True))
+        data_sim_list.append(pm.MvNormalCov('data_{}'.format(paths),
+                                        mu=theta[parent_idx],
+                                        C=sigma[parent_idx],
+                                        value=np.array(data.ix[(data['species'] == str(n.taxon)) &
+                                                               reduce(operator.iand,
+                                                                      map(lambda s: data[s[0]] == s[1],
+                                                                          zip(effects, path[1:]))), 0:num_traits])))
         return
- 
+
     has_siblings = len(node.keys()) > 1
     for k in node.keys():
         mk_node(species, k, node[k], parent_idx, effects, path + [k], has_siblings)
