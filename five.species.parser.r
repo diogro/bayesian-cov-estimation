@@ -36,11 +36,11 @@ mats[[3]] = CalculateMatrix(linear.c)
 mats[[4]] = CalculateMatrix(linear.d)
 mats[[5]] = CalculateMatrix(linear.e)
 
-write.csv(new.data, './dados5sp-with-factors.csv')
+write.csv(new.data, './dados5sp-with-factors.csv', row.names=F)
 
 clade.names = c('A', 'B', 'C', 'D', 'E')
 monkey.matrices = array(dim=c(4*length(clade.names), 4))
-colnames(monkey.matrices) = colnames(mat.a)
+colnames(monkey.matrices) = colnames(mats[[1]])
 for (i in 1:length(clade.names)){
 lower = ((i-1)*4)+1
     upper = (i*4)
