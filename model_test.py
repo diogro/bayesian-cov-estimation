@@ -9,7 +9,7 @@ t = dendropy.Tree.get_from_string("(B, ((C, E),(A,D)))", "newick")
 
 num_leafs = len(t.leaf_nodes())
 num_traits = 4
-effects = ['SUB', 'SEX']
+effects = ['SEX']
 
 data = pd.read_csv("./dados5sp-with-factors.csv")
 raw_matrices = pd.read_csv("./five.species.matrices.csv")
@@ -36,7 +36,7 @@ node_means = {}
 for i in range(len(monkey_labels)):
     if t.find_node_with_taxon_label(monkey_labels[i]):
         new_key = str(t.find_node_with_taxon_label(monkey_labels[i]))
-        node_means[new_key] = np.array(data.ix[data['species'] == str(monkey_labels[i]), 0:num_traits]).mean(0)
+        node_means[new_key] = np.array(data.ix[data['species'] == str(monkey_labels[i]), 1:num_traits]).mean(0)
         node_sample_size[new_key] = node_sample_size.pop(monkey_labels[i])
         if node_sample_size[new_key] < num_traits + 2:
             node_matrices[new_key] = make_symetric(nc.noise_control(node_matrices.pop(monkey_labels[i])))
@@ -78,7 +78,6 @@ theta = [pm.MvNormalCov('theta_0',
                         mu=np.zeros(num_traits),
                         C=np.eye(num_traits)*10.,
                         value=node_means[str(root)])]
-#                        value=np.zeros(num_traits))]
 
 sigma = [pm.WishartCov('sigma_0',
                        n=num_traits+1,
@@ -145,7 +144,7 @@ def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=Fa
     if has_siblings:
         theta.append(pm.MvNormalCov('theta_{}'.format(paths),
                                     mu=theta[parent_idx],
-                                    C=np.eye(num_traits),
+                                    C=400*np.eye(num_traits),
                                     value=node_means[species]))
         sigma.append(pm.WishartCov('sigma_{}'.format(paths),
                                    n=num_traits+1,

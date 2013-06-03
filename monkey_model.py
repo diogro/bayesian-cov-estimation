@@ -31,11 +31,13 @@ for i in range(1, len(monkey_labels)):
 
 # Tirando quem nao esta na filogenia e trocando os keys
 
+node_means = {}
 for i in range(len(monkey_labels)):
     if t.find_node_with_taxon_label(monkey_labels[i]):
         new_key = str(t.find_node_with_taxon_label(monkey_labels[i]))
+        node_means[new_key] = np.array(data.ix[data['species'] == str(monkey_labels[i]), 0:num_traits]).mean(0)
         node_sample_size[new_key] = node_sample_size.pop(monkey_labels[i])
-        if node_sample_size[new_key] < 60:
+        if node_sample_size[new_key] < num_traits + 2:
             node_matrices[new_key] = make_symetric(nc.noise_control(node_matrices.pop(monkey_labels[i])))
         else:
             node_matrices[new_key] = node_matrices.pop(monkey_labels[i])
@@ -50,18 +52,21 @@ for i in range(len(monkey_labels)):
 def matrix_mean(child_labels):
     new_matrix = node_sample_size[str(child_labels[0])]*node_matrices[str(child_labels[0])]
     sample = node_sample_size[str(child_labels[0])]
+    new_mean = node_means[str(child_labels[0])]
     for i in range(1, len(child_labels)):
         new_matrix = new_matrix +\
             node_sample_size[str(child_labels[i])] * node_matrices[str(child_labels[i])]
         sample = sample + node_sample_size[str(child_labels[i])]
+        new_mean = new_mean + node_means[str(child_labels[i])]
     new_matrix = make_symetric(new_matrix/sample)
-    return new_matrix, sample
+    new_mean = new_mean/len(child_labels)
+    return new_matrix, sample, new_mean
 
 # Calculando as matrizes e tamanhos amostrais para todos os nodes
 
 for n in t.postorder_node_iter():
     if str(n) not in node_matrices:
-        node_matrices[str(n)], node_sample_size[str(n)] = matrix_mean(n.child_nodes())
+        node_matrices[str(n)], node_sample_size[str(n)], node_means[str(n)] = matrix_mean(n.child_nodes())
 
 # Agora comeca o PyMC
 
@@ -71,7 +76,7 @@ theta = [pm.MvNormalCov('theta_0',
                         #mu=np.array(data.ix[:, 0:num_traits].mean()),
                         mu=np.zeros(num_traits),
                         C=np.eye(num_traits)*10.,
-                        value=np.zeros(num_traits))]
+                        value=node_means[str(root)])]
 
 sigma = [pm.WishartCov('sigma_0',
                        n=num_traits+1,
@@ -87,7 +92,7 @@ for n in t.nodes()[1:]:
     theta.append(pm.MvNormalCov('theta_{}'.format(str(i)),
                                 mu=theta[parent_idx],
                                 C=sigma[parent_idx],
-                                value=np.zeros(num_traits)))
+                                value=node_means[str(n)]))
 
     sigma.append(pm.WishartCov('sigma_{}'.format(str(i)),
                                n=num_traits+1,
@@ -139,8 +144,8 @@ def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=Fa
     if has_siblings:
         theta.append(pm.MvNormalCov('theta_{}'.format(paths),
                                     mu=theta[parent_idx],
-                                    C=np.eye(num_traits),
-                                    value=np.zeros(num_traits)))
+                                    C=100*np.eye(num_traits),
+                                    value=node_means[species]))
         sigma.append(pm.WishartCov('sigma_{}'.format(paths),
                                    n=num_traits+1,
                                    C=sigma[parent_idx],
@@ -160,7 +165,7 @@ def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=Fa
                                             value=obs_data,
                                             observed=True))
 
-        # Slow method to simulate n populations from posterior	
+        # Slow method to simulate n populations from posterior
         #ds = []
         #for i in xrange(0,obs_data.shape[0]):
         #    ds.append(pm.MvNormalCov('data_{}_{}'.format(paths, i),
@@ -168,7 +173,7 @@ def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=Fa
         #                                    C=sigma[parent_idx]
         #                                    ))
 
-        #data_sim_list.append(ds) 
+        #data_sim_list.append(ds)
 
         return
 
