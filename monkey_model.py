@@ -17,7 +17,6 @@ with open('monkey.matrices.labels.txt') as f:
 
 # Lendo matrizes ML pra todo mundo, junto com tamanhos amostrais
 
-
 def make_symetric(matrix):
     matrix = np.tril(matrix) + np.tril(matrix, k=-1).transpose()
     return matrix
@@ -32,6 +31,7 @@ for i in range(1, len(monkey_labels)):
 # Tirando quem nao esta na filogenia e trocando os keys
 
 node_means = {}
+
 for i in range(len(monkey_labels)):
     if t.find_node_with_taxon_label(monkey_labels[i]):
         new_key = str(t.find_node_with_taxon_label(monkey_labels[i]))
@@ -47,7 +47,6 @@ for i in range(len(monkey_labels)):
 
 # Funcao que recebe uma lista de filhos e calcula a matriz media pro parent
 # node
-
 
 def matrix_mean(child_labels):
     new_matrix = node_sample_size[str(child_labels[0])]*node_matrices[str(child_labels[0])]
@@ -84,14 +83,17 @@ sigma = [pm.WishartCov('sigma_0',
                        value=node_matrices[str(root)])]
 
 tree_idx = {str(root): 0}
+var_factors = {}
 
 i = 1
 for n in t.nodes()[1:]:
     parent_idx = tree_idx[str(n.parent_node)]
 
+    var_factors[str(i)] = pm.Uniform('var_factor_{}'.format(str(i)), lower=0, upper=1000)
+
     theta.append(pm.MvNormalCov('theta_{}'.format(str(i)),
                                 mu=theta[parent_idx],
-                                C=sigma[parent_idx],
+                                C=sigma[parent_idx]*var_factors[str(i)],
                                 value=node_means[str(n)]))
 
     sigma.append(pm.WishartCov('sigma_{}'.format(str(i)),
@@ -142,9 +144,11 @@ def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=Fa
     paths = reduce(lambda x, y: "{}__{}".format(x, y).replace(' ', '_'), path)
 
     if has_siblings:
+        var_factors[paths] = pm.Uniform('var_factor_{}'.format(paths), lower=0, upper=1000)
+
         theta.append(pm.MvNormalCov('theta_{}'.format(paths),
                                     mu=theta[parent_idx],
-                                    C=100*np.eye(num_traits),
+                                    C=var_factors[paths]*np.eye(num_traits),
                                     value=node_means[species]))
         sigma.append(pm.WishartCov('sigma_{}'.format(paths),
                                    n=num_traits+1,
