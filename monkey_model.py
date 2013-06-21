@@ -74,16 +74,17 @@ root = t.seed_node
 theta = [pm.MvNormalCov('theta_0',
                         #mu=np.array(data.ix[:, 0:num_traits].mean()),
                         mu=np.zeros(num_traits),
-                        C=np.eye(num_traits)*10.,
+                        C=np.eye(num_traits)*100.,
                         value=node_means[str(root)])]
 
 sigma = [pm.WishartCov('sigma_0',
                        n=num_traits+1,
-                       C=np.eye(num_traits)*10.,
+                       C=np.eye(num_traits)*100.,
                        value=node_matrices[str(root)])]
 
 tree_idx = {str(root): 0}
 var_factors = {}
+betas = {}
 
 i = 1
 for n in t.nodes()[1:]:
@@ -91,8 +92,13 @@ for n in t.nodes()[1:]:
 
     var_factors[str(i)] = pm.Uniform('var_factor_{}'.format(str(i)), lower=0, upper=1000)
 
+    betas[str(i)] = pm.MvNormalCov('betas_{}'.format(str(i)),
+                                   mu=np.zeros(num_traits),
+                                   C=np.eye(num_traits)*100.,
+                                   value=np.zeros(num_traits))
+
     theta.append(pm.MvNormalCov('theta_{}'.format(str(i)),
-                                mu=theta[parent_idx],
+                                mu=theta[parent_idx] + betas[str(i)],
                                 C=sigma[parent_idx]*var_factors[str(i)],
                                 value=node_means[str(n)]))
 
