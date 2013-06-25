@@ -1,21 +1,32 @@
 import pandas as pd
 import numpy as np
 import pymc as pm
-import noise_control as nc
 import dendropy
 import operator
 
-t = dendropy.Tree.get_from_path("./small.nwm.tree.nw", "newick")
-num_leafs = len(t.leaf_nodes())
-num_traits = 39
-effects = ['SUB', 'SEX']
+import os, sys, inspect
+cmd_folder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0]))
+if cmd_folder not in sys.path:
+        sys.path.insert(0, cmd_folder)
+cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"../utils")))
+if cmd_subfolder not in sys.path:
+    sys.path.insert(0, cmd_subfolder)
+import noise_control as nc
 
-data = pd.read_csv("./monkey.data.csv")
-raw_matrices = pd.read_csv("./monkey.matrices.csv")
-with open('monkey.matrices.labels.txt') as f:
+
+t = dendropy.Tree.get_from_string("(B, ((C, E),(A,D)))", "newick")
+
+num_leafs = len(t.leaf_nodes())
+num_traits = 4
+effects = ['SEX']
+
+data = pd.read_csv("../dados/dados5sp-with-factors.csv")
+raw_matrices = pd.read_csv("../matrices/five.species.matrices.csv")
+with open('../matrices/five.species.matrices.labels.txt') as f:
     monkey_labels = f.read().splitlines()
 
 # Lendo matrizes ML pra todo mundo, junto com tamanhos amostrais
+
 
 def make_symetric(matrix):
     matrix = np.tril(matrix) + np.tril(matrix, k=-1).transpose()
@@ -31,11 +42,10 @@ for i in range(1, len(monkey_labels)):
 # Tirando quem nao esta na filogenia e trocando os keys
 
 node_means = {}
-
 for i in range(len(monkey_labels)):
     if t.find_node_with_taxon_label(monkey_labels[i]):
         new_key = str(t.find_node_with_taxon_label(monkey_labels[i]))
-        node_means[new_key] = np.array(data.ix[data['species'] == str(monkey_labels[i]), 0:num_traits]).mean(0)
+        node_means[new_key] = np.array(data.ix[data['species'] == str(monkey_labels[i]), 1:num_traits]).mean(0)
         node_sample_size[new_key] = node_sample_size.pop(monkey_labels[i])
         if node_sample_size[new_key] < num_traits + 2:
             node_matrices[new_key] = make_symetric(nc.noise_control(node_matrices.pop(monkey_labels[i])))
@@ -47,6 +57,7 @@ for i in range(len(monkey_labels)):
 
 # Funcao que recebe uma lista de filhos e calcula a matriz media pro parent
 # node
+
 
 def matrix_mean(child_labels):
     new_matrix = node_sample_size[str(child_labels[0])]*node_matrices[str(child_labels[0])]
@@ -74,32 +85,23 @@ root = t.seed_node
 theta = [pm.MvNormalCov('theta_0',
                         #mu=np.array(data.ix[:, 0:num_traits].mean()),
                         mu=np.zeros(num_traits),
-                        C=np.eye(num_traits)*100.,
+                        C=np.eye(num_traits)*10.,
                         value=node_means[str(root)])]
 
 sigma = [pm.WishartCov('sigma_0',
                        n=num_traits+1,
-                       C=np.eye(num_traits)*100.,
+                       C=np.eye(num_traits)*10.,
                        value=node_matrices[str(root)])]
 
 tree_idx = {str(root): 0}
-var_factors = {}
-betas = {}
 
 i = 1
 for n in t.nodes()[1:]:
     parent_idx = tree_idx[str(n.parent_node)]
 
-    var_factors[str(i)] = pm.Uniform('var_factor_{}'.format(str(i)), lower=0, upper=1000)
-
-    betas[str(i)] = pm.MvNormalCov('betas_{}'.format(str(i)),
-                                   mu=np.zeros(num_traits),
-                                   C=np.eye(num_traits)*100.,
-                                   value=np.zeros(num_traits))
-
     theta.append(pm.MvNormalCov('theta_{}'.format(str(i)),
-                                mu=theta[parent_idx] + betas[str(i)],
-                                C=sigma[parent_idx]*var_factors[str(i)],
+                                mu=theta[parent_idx],
+                                C=sigma[parent_idx],
                                 value=node_means[str(n)]))
 
     sigma.append(pm.WishartCov('sigma_{}'.format(str(i)),
@@ -109,7 +111,6 @@ for n in t.nodes()[1:]:
 
     tree_idx[str(n)] = len(theta) - 1
     i = i + 1
-
 
 def mk_fixed_effects(effects):
     factor_effects = {}
@@ -150,11 +151,9 @@ def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=Fa
     paths = reduce(lambda x, y: "{}__{}".format(x, y).replace(' ', '_'), path)
 
     if has_siblings:
-        var_factors[paths] = pm.Uniform('var_factor_{}'.format(paths), lower=0, upper=1000)
-
         theta.append(pm.MvNormalCov('theta_{}'.format(paths),
                                     mu=theta[parent_idx],
-                                    C=var_factors[paths]*np.eye(num_traits),
+                                    C=400*np.eye(num_traits),
                                     value=node_means[species]))
         sigma.append(pm.WishartCov('sigma_{}'.format(paths),
                                    n=num_traits+1,
@@ -174,6 +173,7 @@ def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=Fa
                                             C=sigma[parent_idx],
                                             value=obs_data,
                                             observed=True))
+
 
         # Slow method to simulate n populations from posterior
         #ds = []

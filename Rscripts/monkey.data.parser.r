@@ -36,7 +36,7 @@ big.data$species[ggg.mask] = 'Gorilla gorilla graueri'
 big.data$species[gggorila.mask] = 'Gorilla gorilla gorilla'
 big.data$species[aab.mask] = 'Aotus azarai boliviensis'
 big.data = big.data[!sex.mask,]
-write.csv(big.data, "monkey.data.csv", row.names=F)
+write.csv(big.data, "../dados/monkey.data.csv", row.names=F)
 
 clade.names = sub("_", " ", names(main.data))
 monkey.matrices = array(dim=c(39*length(clade.names), 39))
@@ -46,8 +46,8 @@ for (i in 1:length(clade.names)){
     upper = (i*39)
     monkey.matrices[lower:upper,] = (main.data[[i]])$ed.cov
 }
-write.csv(monkey.matrices, "./monkey.matrices.csv", row.names=F)
+write.csv(monkey.matrices, "../matrices/monkey.matrices.csv", row.names=F)
 clade.names = sub("cynosurus", "cynosuros", names(main.data))
 clade.names = sub("_", " ", clade.names)
 clade.names = sub("_", " ", clade.names)
-write.table(clade.names, "monkey.matrices.labels.txt", row.names=F, col.names=F, quote=F)
+write.table(clade.names, "../matrices/monkey.matrices.labels.txt", row.names=F, col.names=F, quote=F)
