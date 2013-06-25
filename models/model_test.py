@@ -11,9 +11,9 @@ num_leafs = len(t.leaf_nodes())
 num_traits = 4
 effects = ['SEX']
 
-data = pd.read_csv("./dados5sp-with-factors.csv")
-raw_matrices = pd.read_csv("./five.species.matrices.csv")
-with open('./five.species.matrices.labels.txt') as f:
+data = pd.read_csv("../dados/dados5sp-with-factors.csv")
+raw_matrices = pd.read_csv("../matrices/five.species.matrices.csv")
+with open('../matrices/five.species.matrices.labels.txt') as f:
     monkey_labels = f.read().splitlines()
 
 # Lendo matrizes ML pra todo mundo, junto com tamanhos amostrais

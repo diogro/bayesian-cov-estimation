@@ -5,14 +5,14 @@ import noise_control as nc
 import dendropy
 import operator
 
-t = dendropy.Tree.get_from_path("./small.nwm.tree.nw", "newick")
+t = dendropy.Tree.get_from_path("../trees/small.nwm.tree.nw", "newick")
 num_leafs = len(t.leaf_nodes())
 num_traits = 39
 effects = ['SUB', 'SEX']
 
-data = pd.read_csv("./monkey.data.csv")
-raw_matrices = pd.read_csv("./monkey.matrices.csv")
-with open('monkey.matrices.labels.txt') as f:
+data = pd.read_csv("../dados/monkey.data.csv")
+raw_matrices = pd.read_csv("../matrices/monkey.matrices.csv")
+with open('../matrices/monkey.matrices.labels.txt') as f:
     monkey_labels = f.read().splitlines()
 
 # Lendo matrizes ML pra todo mundo, junto com tamanhos amostrais

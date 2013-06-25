@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import pymc as pm
 
-dados = pd.read_csv("./dados5sp.csv")
+dados = pd.read_csv("../dados/dados5sp.csv")
 
 # Filogenia: (B, ((C, E),(A, D)))
 

@@ -3,7 +3,7 @@ import numpy as np
 import pymc as pm
 import dendropy
 
-data = pd.read_csv("./dados5sp.csv")
+data = pd.read_csv("../dados/dados5sp.csv")
 
 t = dendropy.Tree.get_from_string("(B, ((C, E),(A,D)))", "newick")
 num_leafs = len(t.leaf_nodes())
