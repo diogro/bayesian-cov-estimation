@@ -1,4 +1,4 @@
-raw.data = read.csv("./dados5sp.csv")
+raw.data = read.csv("../dados/dados5sp.csv")
 
 n.total = dim(raw.data)[1]
 sex = sample(c('M', 'F'), n.total, replace= T)
@@ -36,7 +36,7 @@ mats[[3]] = CalculateMatrix(linear.c)
 mats[[4]] = CalculateMatrix(linear.d)
 mats[[5]] = CalculateMatrix(linear.e)
 
-write.csv(new.data, './dados5sp-with-factors.csv', row.names=F)
+write.csv(new.data, '../dados/dados5sp-with-factors.csv', row.names=F)
 
 clade.names = c('A', 'B', 'C', 'D', 'E')
 monkey.matrices = array(dim=c(4*length(clade.names), 4))
@@ -46,5 +46,5 @@ lower = ((i-1)*4)+1
     upper = (i*4)
     monkey.matrices[lower:upper,] = mats[[i]]
 }
-write.csv(monkey.matrices, "./five.species.matrices.csv", row.names=F)
-write.table(clade.names, "five.species.matrices.labels.txt", row.names=F, col.names=F, quote=F)
+write.csv(monkey.matrices, "../matrices/five.species.matrices.csv", row.names=F)
+write.table(clade.names, "../matrices/five.species.matrices.labels.txt", row.names=F, col.names=F, quote=F)
