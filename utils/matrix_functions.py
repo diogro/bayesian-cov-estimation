@@ -29,7 +29,7 @@ def cos_angle(vector1, vector2):
     return angle
 
 
-def random_skewers(matrix1, matrix2, num_vectors = 1000):
+def random_skewers(matrix1, matrix2, num_vectors=1000):
     traits = matrix1.shape[0]
     rand_vec = np.random.multivariate_normal(np.zeros(traits),
                                              np.identity(traits, float),
@@ -40,23 +40,24 @@ def random_skewers(matrix1, matrix2, num_vectors = 1000):
     ndelta_z1 = delta_z1/np.sqrt((delta_z1*delta_z1).sum(0))
     ndelta_z2 = delta_z2/np.sqrt((delta_z2*delta_z2).sum(0))
 
-    return np.mean(np.diag(np.dot(ndelta_z1.T, ndelta_z2))) 
+    return np.mean(np.diag(np.dot(ndelta_z1.T, ndelta_z2)))
 
-def orandom_skewers(matrix1, matrix2, num_vectors = 1000):
-    traits = matrix1.shape[0]
-    rand_vec = np.random.multivariate_normal(np.zeros(traits),
-                                             np.identity(traits, float),
-                                             num_vectors).T
-    delta_z1 = np.dot(matrix1, rand_vec)
-    delta_z2 = np.dot(matrix2, rand_vec)
 
-    rs = 0.
-    for i in xrange(num_vectors):
-        rs += cos_angle(delta_z1[:, i], delta_z2[:, i])
-    rs = rs / num_vectors
+def read_matrices(matrices, labels, num_traits):
+    raw_matrices = pd.read_csv(matrices)
+    with open(labels) as f:
+        monkey_labels = f.read().splitlines()
 
-    return rs
+    def make_symetric(matrix):
+        matrix = np.tril(matrix) + np.tril(matrix, k=-1).transpose()
+        return matrix
 
+    node_matrices = {monkey_labels[0]: np.array(raw_matrices.ix[0:num_traits-1, ])}
+    for i in range(1, len(monkey_labels)):
+        new_matrix = np.array(raw_matrices.ix[i*num_traits:(((i+1)*num_traits)-1), :])
+        node_matrices[monkey_labels[i]] = make_symetric(new_matrix)
+
+    return node_matrices
 
 
 def matrix_correlation(Matrix1, Matrix2):
