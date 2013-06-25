@@ -4,7 +4,7 @@ n.total = dim(raw.data)[1]
 sex = sample(c('M', 'F'), n.total, replace= T)
 sub = sample(c('1', '2', '3'), n.total, replace= T)
 
-new.data = data.frame(raw.data, SUB = sub, SEX = sex)
+ew.data = data.frame(raw.data, SUB = sub, SEX = sex)
 
 new.data[new.data$especies == 'A' & new.data$SEX == 'M',1:4] = new.data[new.data$especies == 'A' & new.data$SEX == 'M',1:4] + 1
 new.data[new.data$especies == 'D' & new.data$SEX == 'M',1:4] = new.data[new.data$especies == 'D' & new.data$SEX == 'M',1:4] + 1
@@ -35,6 +35,8 @@ mats[[2]] = CalculateMatrix(linear.b)
 mats[[3]] = CalculateMatrix(linear.c)
 mats[[4]] = CalculateMatrix(linear.d)
 mats[[5]] = CalculateMatrix(linear.e)
+
+names(new.data)[names(new.data) == "especies"] = "species"
 
 write.csv(new.data, '../dados/dados5sp-with-factors.csv', row.names=F)
 
