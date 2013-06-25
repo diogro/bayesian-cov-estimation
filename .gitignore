@@ -41,8 +41,12 @@ nosetests.xml
 *.png
 monkey.data.csv
 monkey.matrices.csv
+nwm.data.csv
+nwm.matrices.csv
 *.txt
 *.pickle
 *.plain
+
+nwm.raw.*
 
 .ipynb_checkpoints/
