@@ -9,8 +9,8 @@ Callicebus SPECIES SUB SEX
 Aotus SPECIES SUB SEX
 Saimiri SPECIES SUB SEX
 Cebus SPECIES SUB SEX
-Leontopithecus SPECIES MSM SEX
-Saguinus SPECIES SUB SEX
+Leontopithecus SPECIES MSM
+Saguinus SPECIES SUB
 Callimico SPECIES SEX
 Callithrix SPECIES SUB
 Cebuella SPECIES SUB

@@ -17,7 +17,14 @@ import noise_control as nc
 t = dendropy.Tree.get_from_path("../trees/nwm.genus.tree.nw", "newick")
 num_leafs = len(t.leaf_nodes())
 num_traits = 39
-effects = ['SPECIES']
+
+with open("../matrices/nwm.factors.txt") as f:
+        aux_list = f.read().splitlines()
+effects_dict = {}
+for effect in aux_list:
+    new_key = str(t.find_node_with_taxon_label(effect.split()[0]))
+    effects_dict[new_key] = effect.split()[1:]
+
 
 data = pd.read_csv("../dados/nwm.clean.data.csv")
 raw_matrices = pd.read_csv("../matrices/nwm.matrices.csv")
@@ -114,9 +121,10 @@ for n in t.nodes()[1:]:
     i = i + 1
 
 
-def mk_fixed_effects(effects):
+def mk_fixed_effects(effects_dict):
     factor_effects = {}
     for n in t.leaf_nodes():
+        effects = effects_dict[str(n)]
         factor_effects[str(n)] = mk(n, effects[0], effects[1:])
     return factor_effects
 
@@ -131,22 +139,22 @@ def mk(s, e0, es):
 data_list = []
 #data_sim_list = []
 
-effects_tree = mk_fixed_effects(effects)
+effects_tree = mk_fixed_effects(effects_dict)
 
 
-def tree_flattening(tree):
-    tree_list = []
+#def tree_flattening(tree):
+    #tree_list = []
 
-    def tf(t, lpart, lresult):
-        if not t.items():
-            lresult.append(lpart)
-        else:
-            map(lambda k: tf(t[k], lpart + [k], lresult), t.keys())
+    #def tf(t, lpart, lresult):
+        #if not t.items():
+            #lresult.append(lpart)
+        #else:
+            #map(lambda k: tf(t[k], lpart + [k], lresult), t.keys())
 
-    tf(tree, [], tree_list)
-    return tree_list
+    #tf(tree, [], tree_list)
+    #return tree_list
 
-flat_effects_tree = tree_flattening(effects_tree)
+#flat_effects_tree = tree_flattening(effects_tree)
 
 
 def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=False):
@@ -199,4 +207,4 @@ for n in t.leaf_nodes():
     leaf_idx = tree_idx[str(n)]
     path = [str(n.taxon)]
     has_siblings = effects_tree[str(n)] and len(effects_tree[str(n)]) > 1
-    mk_node(str(n), str(n), effects_tree[str(n)], leaf_idx, effects, path, has_siblings)
+    mk_node(str(n), str(n), effects_tree[str(n)], leaf_idx, effects_dict[str(n)], path, has_siblings)
