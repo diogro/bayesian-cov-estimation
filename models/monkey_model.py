@@ -168,7 +168,7 @@ def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=Fa
 
     if not node.items():
         obs_data = np.array(data.ix[(data['GENUS'] == str(n.taxon)) &
-   	        reduce(operator.iand,
+            reduce(operator.iand,
                 map(lambda s: data[s[0]] == s[1],
                     zip(effects, path[1:]))), 0:num_traits])
 
