@@ -14,14 +14,21 @@ if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 import noise_control as nc
 
-t = dendropy.Tree.get_from_path("../trees/small.nwm.tree.nw", "newick")
+t = dendropy.Tree.get_from_path("../trees/nwm.genus.tree.nw", "newick")
 num_leafs = len(t.leaf_nodes())
 num_traits = 39
-effects = ['SUB', 'SEX']
 
-data = pd.read_csv("../dados/monkey.data.csv")
-raw_matrices = pd.read_csv("../matrices/monkey.matrices.csv")
-with open('../matrices/monkey.matrices.labels.txt') as f:
+with open("../matrices/nwm.factors.txt") as f:
+        aux_list = f.read().splitlines()
+effects_dict = {}
+for effect in aux_list:
+    new_key = str(t.find_node_with_taxon_label(effect.split()[0]))
+    effects_dict[new_key] = effect.split()[1:]
+
+
+data = pd.read_csv("../dados/nwm.clean.data.csv")
+raw_matrices = pd.read_csv("../matrices/nwm.matrices.csv")
+with open('../matrices/nwm.matrices.labels.txt') as f:
     monkey_labels = f.read().splitlines()
 
 # Lendo matrizes ML pra todo mundo, junto com tamanhos amostrais
@@ -31,11 +38,11 @@ def make_symetric(matrix):
     return matrix
 
 node_matrices = {monkey_labels[0]: np.array(raw_matrices.ix[0:num_traits-1, ])}
-node_sample_size = {monkey_labels[0]: sum(data['species'] == monkey_labels[1])}
+node_sample_size = {monkey_labels[0]: sum(data['GENUS'] == monkey_labels[1])}
 for i in range(1, len(monkey_labels)):
     new_matrix = np.array(raw_matrices.ix[i*num_traits:(((i+1)*num_traits)-1), :])
     node_matrices[monkey_labels[i]] = make_symetric(new_matrix)
-    node_sample_size[monkey_labels[i]] = sum(data['species'] == monkey_labels[i])
+    node_sample_size[monkey_labels[i]] = sum(data['GENUS'] == monkey_labels[i])
 
 # Tirando quem nao esta na filogenia e trocando os keys
 
@@ -44,7 +51,7 @@ node_means = {}
 for i in range(len(monkey_labels)):
     if t.find_node_with_taxon_label(monkey_labels[i]):
         new_key = str(t.find_node_with_taxon_label(monkey_labels[i]))
-        node_means[new_key] = np.array(data.ix[data['species'] == str(monkey_labels[i]), 0:num_traits]).mean(0)
+        node_means[new_key] = np.array(data.ix[data['GENUS'] == str(monkey_labels[i]), 0:num_traits]).mean(0)
         node_sample_size[new_key] = node_sample_size.pop(monkey_labels[i])
         if node_sample_size[new_key] < num_traits + 2:
             node_matrices[new_key] = make_symetric(nc.noise_control(node_matrices.pop(monkey_labels[i])))
@@ -120,15 +127,16 @@ for n in t.nodes()[1:]:
     i = i + 1
 
 
-def mk_fixed_effects(effects):
+def mk_fixed_effects(effects_dict):
     factor_effects = {}
     for n in t.leaf_nodes():
+        effects = effects_dict[str(n)]
         factor_effects[str(n)] = mk(n, effects[0], effects[1:])
     return factor_effects
 
 
 def mk(s, e0, es):
-    filtered = set(data.ix[data['species'] == str(s.taxon), e0])
+    filtered = set(data.ix[data['GENUS'] == str(s.taxon), e0])
     if len(es) < 1:
         return {k: {} for k in filtered}
     else:
@@ -137,22 +145,22 @@ def mk(s, e0, es):
 data_list = []
 #data_sim_list = []
 
-effects_tree = mk_fixed_effects(effects)
+effects_tree = mk_fixed_effects(effects_dict)
 
 
-def tree_flattening(tree):
-    tree_list = []
+#def tree_flattening(tree):
+    #tree_list = []
 
-    def tf(t, lpart, lresult):
-        if not t.items():
-            lresult.append(lpart)
-        else:
-            map(lambda k: tf(t[k], lpart + [k], lresult), t.keys())
+    #def tf(t, lpart, lresult):
+        #if not t.items():
+            #lresult.append(lpart)
+        #else:
+            #map(lambda k: tf(t[k], lpart + [k], lresult), t.keys())
 
-    tf(tree, [], tree_list)
-    return tree_list
+    #tf(tree, [], tree_list)
+    #return tree_list
 
-flat_effects_tree = tree_flattening(effects_tree)
+#flat_effects_tree = tree_flattening(effects_tree)
 
 
 def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=False):
@@ -173,8 +181,8 @@ def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=Fa
         parent_idx = len(theta) - 1
 
     if not node.items():
-        obs_data = np.array(data.ix[(data['species'] == str(n.taxon)) &
-   	        reduce(operator.iand,
+        obs_data = np.array(data.ix[(data['GENUS'] == str(n.taxon)) &
+            reduce(operator.iand,
                 map(lambda s: data[s[0]] == s[1],
                     zip(effects, path[1:]))), 0:num_traits])
 
@@ -205,4 +213,4 @@ for n in t.leaf_nodes():
     leaf_idx = tree_idx[str(n)]
     path = [str(n.taxon)]
     has_siblings = effects_tree[str(n)] and len(effects_tree[str(n)]) > 1
-    mk_node(str(n), str(n), effects_tree[str(n)], leaf_idx, effects, path, has_siblings)
+    mk_node(str(n), str(n), effects_tree[str(n)], leaf_idx, effects_dict[str(n)], path, has_siblings)

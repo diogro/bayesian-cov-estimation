@@ -43,6 +43,7 @@ monkey.data.csv
 monkey.matrices.csv
 nwm.data.csv
 nwm.matrices.csv
+nwm.clean.data.csv
 *.txt
 *.pickle
 *.plain
