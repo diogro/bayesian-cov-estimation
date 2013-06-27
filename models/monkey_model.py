@@ -189,7 +189,8 @@ def mk_node(species, node_name, node, parent_idx, effects, path, has_siblings=Fa
                 map(lambda s: data[s[0]] == s[1],
                     zip(effects, path[1:]))), 0:num_traits])
 
-        data_list.append(pm.MvNormalCov('data_{}'.format(paths),
+        data_name = str(theta[parent_idx]).replace("theta_","")
+        data_list.append(pm.MvNormalCov('data_{}'.format(data_name),
                                             mu=theta[parent_idx],
                                             C=sigma[parent_idx],
                                             value=obs_data,
