@@ -131,16 +131,19 @@ def mk_fixed_effects(effects_dict):
     factor_effects = {}
     for n in t.leaf_nodes():
         effects = effects_dict[str(n)]
-        factor_effects[str(n)] = mk(n, effects[0], effects[1:])
+        factor_effects[str(n)] = mk(n, effects[0], effects[1:], data)
     return factor_effects
 
 
-def mk(s, e0, es):
-    filtered = set(data.ix[data['GENUS'] == str(s.taxon), e0])
+def mk(s, e0, es, local_data):
+    filtered = set(local_data.ix[local_data['GENUS'] == str(s.taxon), e0])
     if len(es) < 1:
         return {k: {} for k in filtered}
     else:
-        return {k: mk(s, es[0], es[1:] if len(es) > 1 else []) for k in filtered}
+        return {k: mk(s,
+                      es[0],
+                      es[1:] if len(es) > 1 else [],
+                      local_data.ix[(local_data['GENUS'] == str(s.taxon)) & (local_data[e0] == k), :]) for k in filtered}
 
 data_list = []
 #data_sim_list = []

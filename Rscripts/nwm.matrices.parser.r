@@ -1,10 +1,10 @@
 raw.data = scan("../dados/nwm.raw.matrices.csv", character())
 raw.data = strsplit(raw.data, ',')
 traits = c()
+num.traits = 39
 for (i in 2:(num.traits+1)) {traits[i-1] = raw.data[[i]][1]}
 clades = unique(unlist(raw.data[grep(traits[1], raw.data)-1]))[-2]
 
-num.traits = length(traits)
 num.clades = length(clades)
 
 main.data = list()
