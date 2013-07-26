@@ -30,3 +30,4 @@ for (i in 1:length(clades)){
 write.csv(nwm.matrices, "../matrices/nwm.matrices.csv", row.names=F)
 write.table(clades, "../matrices/nwm.matrices.labels.txt", row.names=F, col.names=F, quote=F)
 
+#save(main.data, file = '~/Dropbox/labbio/Shared\ Lab/Pato\ -\ Ogro/nwm.matrices.Rdata')
