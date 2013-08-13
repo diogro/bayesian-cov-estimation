@@ -21,8 +21,6 @@ def eigen_var_calc(Matrix):
 def icv_calc(Matrix):
     eVal, eVec = np.linalg.eigh(Matrix)
     icv = np.sqrt(np.var(eVal)) / np.mean(eVal)
-    return icv
-
 
 def cos_angle(vector1, vector2):
     angle = np.dot(vector1, vector2) / (np.linalg.norm(vector1) *
@@ -61,9 +59,7 @@ def read_matrices(matrices, labels, num_traits):
     return node_matrices
 
 
-def matrix_correlation(Matrix1, Matrix2):
-    tr = Matrix1.shape[0]
-    x, y = np.asarray(np.invert(np.tri(tr, tr, dtype=bool)),
-                      dtype=float).nonzero()
-    correlation = np.corrcoef(Matrix1[x, y], Matrix2[x, y])[1, 0]
+def matrix_correlation(matrix1, matrix2):
+    tr = matrix1.shape[0]
+    correlation = np.corrcoef(matrix1[np.triu_indices(tr,1)], matrix2[np.triu_indices(tr,1)])[1, 0]
     return correlation
