@@ -44,6 +44,7 @@ monkey.matrices.csv
 nwm.data.csv
 nwm.matrices.csv
 nwm.clean.data.csv
+mean.center.residuals.NWM.csv
 *.txt
 *.pickle
 *.plain
