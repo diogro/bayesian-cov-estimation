@@ -49,6 +49,9 @@ mean.center.residuals.NWM.csv
 *.pickle
 *.plain
 
+*.Rdata
+*.rdata
+
 nwm.raw.*
 
 .ipynb_checkpoints/
