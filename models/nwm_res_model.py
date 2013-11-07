@@ -20,6 +20,7 @@ num_traits = 39
 data = pd.read_csv("../dados/mean.center.residuals.NWM.csv")
 
 matrices = data.groupby('genus').apply(lambda x: x.cov())
+means = data.groupby('genus').mean()
 genus = pd.unique(data['genus'])
 # Lendo matrizes ML pra todo mundo, junto com tamanhos amostrais
 
@@ -45,7 +46,7 @@ node_name = lambda n: str(n.label or n.taxon or n)
 for g in genus:
     if t.find_node_with_taxon_label(g):
         new_key = node_name(t.find_node_with_taxon_label(g))
-        node_means[new_key] = np.array(data.ix[data['genus'] == str(g), 0:num_traits]).mean(0)
+        node_means[new_key] = np.array(means.T[g])
         node_sample_size[new_key] = node_sample_size.pop(g)
         if node_sample_size[new_key] < num_traits + 2:
             node_matrices[new_key] = make_symetric(nc.noise_control(node_matrices.pop(g)))
