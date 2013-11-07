@@ -1,4 +1,4 @@
-oad("./nwm.res.sim.Rdata")
+load("./nwm.res.sim.Rdata")
 load("~/Dropbox/labbio/cov_bayes_data/residuos.nwm.rdata")
 library(plyr)
 library(reshape2)
@@ -51,4 +51,4 @@ allplots <- function(plots){
         }
     }
 }
-allplots(boxplots.mean)
+allplots(boxplots)

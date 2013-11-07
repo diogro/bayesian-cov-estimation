@@ -40,9 +40,11 @@ for g in genus:
 
 node_means = {}
 
+node_name = lambda n: str(n.label or n.taxon or n)
+
 for g in genus:
     if t.find_node_with_taxon_label(g):
-        new_key = str(t.find_node_with_taxon_label(g))
+        new_key = node_name(t.find_node_with_taxon_label(g))
         node_means[new_key] = np.array(data.ix[data['genus'] == str(g), 0:num_traits]).mean(0)
         node_sample_size[new_key] = node_sample_size.pop(g)
         if node_sample_size[new_key] < num_traits + 2:
@@ -62,9 +64,9 @@ def matrix_mean(child_labels):
     new_mean = np.zeros(num_traits)
     for child in child_labels:
         new_matrix = new_matrix +\
-            node_sample_size[str(child)] * node_matrices[str(child)]
-        sample = sample + node_sample_size[str(child)]
-        new_mean = new_mean + node_means[str(child)]
+            node_sample_size[node_name(child)] * node_matrices[node_name(child)]
+        sample = sample + node_sample_size[node_name(child)]
+        new_mean = new_mean + node_means[node_name(child)]
     new_matrix = new_matrix/sample
     new_mean = new_mean/len(child_labels)
     return new_matrix, sample, new_mean
@@ -72,62 +74,57 @@ def matrix_mean(child_labels):
 # Calculando as matrizes e tamanhos amostrais para todos os nodes
 
 for n in t.postorder_node_iter():
-    if str(n) not in node_matrices:
-        node_matrices[str(n)], node_sample_size[str(n)], node_means[str(n)] = matrix_mean(n.child_nodes())
+    if node_name(n) not in node_matrices:
+        node_matrices[node_name(n)], node_sample_size[node_name(n)], node_means[node_name(n)] = matrix_mean(n.child_nodes())
 
 # Agora comeca o PyMC
 
 root = t.seed_node
 
-theta = [pm.MvNormalCov('theta_0',
-                        mu=np.array(data.ix[:, 0:num_traits].mean()),
-                        #value=node_means[str(root)],
-                        value=np.zeros(num_traits),
-                        #mu=np.zeros(num_traits),
-                        C=np.eye(num_traits)*100.)]
+theta = {node_name(root): pm.MvNormalCov('theta_0',
+                                          mu=np.array(data.ix[:, 0:num_traits].mean()),
+                                          #value=node_means[str(root)],
+                                          value=np.zeros(num_traits),
+                                          #mu=np.zeros(num_traits),
+                                          C=np.eye(num_traits)*100.)}
 
-sigma = [pm.WishartCov('sigma_0',
-                       value=node_matrices[str(root)],
-                       #value=np.eye(num_traits),
-                       n=num_traits+1,
-                       C = node_matrices[str(root)])]
-                       #C=np.eye(num_traits)*100.)]
+sigma = {node_name(root): pm.WishartCov('sigma_0',
+                                         value=node_matrices[node_name(root)],
+                                         #value=np.eye(num_traits),
+                                         n=num_traits+1,
+                                         C = node_matrices[node_name(root)])}
+#C=np.eye(num_traits)*100.)}
 
-tree_idx = {str(root): 0}
 #var_factors = {}
 betas = {}
 
-i = 1
 for n in t.nodes()[1:]:
-    parent_idx = tree_idx[str(n.parent_node)]
+    parent_idx = node_name(n.parent_node)
 
     #var_factors[str(i)] = pm.Uniform('var_factor_{}'.format(str(i)), lower=0, upper=1000)
 
-    betas[str(i)] = pm.MvNormalCov('betas_{}'.format(str(i)),
-                                   value=np.zeros(num_traits),
-                                   mu=np.zeros(num_traits),
-                                   C=np.eye(num_traits)*100.)
+    betas[node_name(n)] = pm.MvNormalCov('betas_{}'.format(node_name(n)),
+                                         value=np.zeros(num_traits),
+                                         mu=np.zeros(num_traits),
+                                         C=np.eye(num_traits)*100.)
 
-    theta.append(pm.MvNormalCov('theta_{}'.format(str(i)),
-                                value=node_means[str(n)],
-                                #value=np.zeros(num_traits),
-                                #mu=theta[parent_idx],
-                                mu=theta[parent_idx] + betas[str(i)],
-                                C=sigma[parent_idx]))
-                                #C=sigma[parent_idx]*var_factors[str(i)]))
+    theta[node_name(n)] = pm.MvNormalCov('theta_{}'.format(node_name(n)),
+                                         value=node_means[node_name(n)],
+                                         #value=np.zeros(num_traits),
+                                         #mu=theta[parent_idx],
+                                         mu=theta[parent_idx] + betas[node_name(n)],
+                                         C=sigma[parent_idx])
+    #C=sigma[parent_idx]*var_factors[node_name(n)])
 
-    sigma.append(pm.WishartCov('sigma_{}'.format(str(i)),
-                               value=node_matrices[str(n)],
-                               #value=np.eye(num_traits),
-                               n=num_traits+1,
-                               C=sigma[parent_idx]))
-
-    tree_idx[str(n)] = len(theta) - 1
-    i = i + 1
+    sigma[node_name(n)] = pm.WishartCov('sigma_{}'.format(node_name(n)),
+                                        value=node_matrices[node_name(n)],
+                                        #value=np.eye(num_traits),
+                                        n=num_traits+1,
+                                        C=sigma[parent_idx])
 
 data_list = []
 for n in t.leaf_nodes():
-    leaf_idx = tree_idx[str(n)]
+    leaf_idx = node_name(n)
     data_list.append(pm.MvNormalCov('data_{}'.format(n.taxon),
                                     mu=theta[leaf_idx],
                                     C=sigma[leaf_idx],
