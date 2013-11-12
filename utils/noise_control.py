@@ -18,9 +18,8 @@ def last_big_eval_index(eig_vals, cutoff):
 
     return last_index
 
-def noise_control(matrix):
+def noise_control(matrix, cutoff = 0.000001):
     """Extends Matrix P and prints it to output_file"""
-    cutoff = 0.000001
     eig_vals, eig_vecs = linalg.eigh(matrix)
     last_ev_index = last_big_eval_index(eig_vals, cutoff)
     eig_vals[0:last_ev_index] = eig_vals[last_ev_index]

@@ -17,6 +17,10 @@ t = dendropy.Tree.get_from_path("../trees/nwm.genus.tree.nw", "newick")
 num_leafs = len(t.leaf_nodes())
 num_traits = 39
 
+for number,n in enumerate(t.internal_nodes()):
+    if not n.taxon:
+        n.label = str(number)
+
 data = pd.read_csv("../dados/mean.center.residuals.NWM.csv")
 
 matrices = data.groupby('genus').apply(lambda x: x.cov())
@@ -98,6 +102,7 @@ sigma = {node_name(root): pm.WishartCov('sigma_0',
 
 #var_factors = {}
 betas = {}
+delta_z = {}
 
 for n in t.nodes()[1:]:
     parent_idx = node_name(n.parent_node)
@@ -109,19 +114,22 @@ for n in t.nodes()[1:]:
                                          mu=np.zeros(num_traits),
                                          C=np.eye(num_traits)*100.)
 
-    theta[node_name(n)] = pm.MvNormalCov('theta_{}'.format(node_name(n)),
-                                         value=node_means[node_name(n)],
-                                         #value=np.zeros(num_traits),
-                                         #mu=theta[parent_idx],
-                                         mu=theta[parent_idx] + betas[node_name(n)],
-                                         C=sigma[parent_idx])
-    #C=sigma[parent_idx]*var_factors[node_name(n)])
-
     sigma[node_name(n)] = pm.WishartCov('sigma_{}'.format(node_name(n)),
                                         value=node_matrices[node_name(n)],
                                         #value=np.eye(num_traits),
                                         n=num_traits+1,
                                         C=sigma[parent_idx])
+                                        #C=sigma[parent_idx]*var_factors[node_name(n)])
+
+    delta_z[node_name(n)] = pm.Lambda('delta-z_{}'.format(node_name(n)),
+                                      lambda s=sigma[parent_idx], b = betas[node_name(n)]: np.dot(s, b))
+
+    theta[node_name(n)] = pm.MvNormalCov('theta_{}'.format(node_name(n)),
+                                         value=node_means[node_name(n)],
+                                         #value=np.zeros(num_traits),
+                                         #mu=theta[parent_idx],
+                                         mu=theta[parent_idx] + delta_z[node_name(n)],
+                                         C=sigma[parent_idx])
 
 data_list = []
 for n in t.leaf_nodes():
