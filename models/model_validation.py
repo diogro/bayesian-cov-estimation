@@ -13,15 +13,15 @@ cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(insp
 if cmd_subfolder not in sys.path:
     sys.path.insert(0, cmd_subfolder)
 
-t = dendropy.Tree.get_from_path("../trees/nwm.genus.tree.nw", "newick")
+t = dendropy.Tree.get_from_path("../trees/random_tree.nw", "newick")
 num_leafs = len(t.leaf_nodes())
-num_traits = 39
+num_traits = 10
 
 for number,n in enumerate(t.internal_nodes()):
     if not n.taxon:
         n.label = str(number)
 
-data = pd.read_csv("../dados/mean.center.residuals.NWM.csv")
+data = pd.read_csv("../dados/random_data.csv")
 
 def shrink(X):
         lw = LedoitWolf(store_precision=False, assume_centered=False)
@@ -31,7 +31,7 @@ def shrink(X):
 data_genus = data.groupby('genus')
 matrices = {}
 for g, d in data_genus:
-    matrices[g] = shrink(np.array(d.ix[:, 0:39]))
+    matrices[g] = shrink(np.array(d.ix[:, 0:num_traits]))
 means = data.groupby('genus').mean()
 genus = pd.unique(data['genus'])
 # Lendo matrizes ML pra todo mundo, junto com tamanhos amostrais
