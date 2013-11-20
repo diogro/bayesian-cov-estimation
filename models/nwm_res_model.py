@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import pymc as pm
 import dendropy
+from theano.sandbox.linalg import matrix_inverse
 
 import os, sys, inspect
 # realpath() with make your script run, even if you symlink it :)
@@ -19,7 +20,7 @@ num_traits = 39
 
 data = pd.read_csv("../dados/mean.center.residuals.NWM.csv")
 
-matrices = data.groupby('genus').apply(lambda x: x.cov())
+matrices = data.groupby('genus').apply(lambda x: np.linalg.inv(x.cov()))
 means = data.groupby('genus').mean()
 genus = pd.unique(data['genus'])
 # Lendo matrizes ML pra todo mundo, junto com tamanhos amostrais
@@ -80,54 +81,71 @@ for n in t.postorder_node_iter():
 
 # Agora comeca o PyMC
 
-root = t.seed_node
+with pm.Model() as model:
+    root = t.seed_node
 
-theta = {node_name(root): pm.MvNormalCov('theta_0',
-                                          mu=np.array(data.ix[:, 0:num_traits].mean()),
-                                          #value=node_means[str(root)],
-                                          value=np.zeros(num_traits),
-                                          #mu=np.zeros(num_traits),
-                                          C=np.eye(num_traits)*100.)}
+    r = pm.MvNormal('theta_0',
+                    mu=np.array(data.ix[:, 0:num_traits].mean()),
+    #                observed=node_means[str(root)],
+                    shape=(num_traits,),
+                    Tau=np.eye(num_traits)*100.)
+    print '=> ', r
 
-sigma = {node_name(root): pm.WishartCov('sigma_0',
-                                         value=node_matrices[node_name(root)],
-                                         #value=np.eye(num_traits),
-                                         n=num_traits+1,
-                                         C = node_matrices[node_name(root)])}
-#C=np.eye(num_traits)*100.)}
+    theta = {node_name(root): pm.MvNormal('theta_0',
+                                           mu=np.array(data.ix[:, 0:num_traits].mean()),
+                 #                          observed=node_means[str(root)],
+                                           shape=(num_traits,),
+                                           #value=np.zeros(num_traits),
+                                           #mu=np.zeros(num_traits),
+                                           Tau=np.eye(num_traits)*100.)}
 
-#var_factors = {}
-betas = {}
+    sigma = {node_name(root): pm.Wishart('sigma_0',
+                 #                         observed=node_matrices[node_name(root)],
+                                          #value=np.eye(num_traits),
+                                          shape=(num_traits, num_traits),
+                                          n=num_traits+1,
+                                          p=num_traits+1,
+                                          V = node_matrices[node_name(root)])}
+    #C=np.eye(num_traits)*100.)}
 
-for n in t.nodes()[1:]:
-    parent_idx = node_name(n.parent_node)
+    #var_factors = {}
+    betas = {}
 
-    #var_factors[str(i)] = pm.Uniform('var_factor_{}'.format(str(i)), lower=0, upper=1000)
+    print theta
+    print r
 
-    betas[node_name(n)] = pm.MvNormalCov('betas_{}'.format(node_name(n)),
-                                         value=np.zeros(num_traits),
-                                         mu=np.zeros(num_traits),
-                                         C=np.eye(num_traits)*100.)
+    for n in t.nodes()[1:]:
+        print theta
+        parent_idx = node_name(n.parent_node)
 
-    theta[node_name(n)] = pm.MvNormalCov('theta_{}'.format(node_name(n)),
-                                         value=node_means[node_name(n)],
-                                         #value=np.zeros(num_traits),
-                                         #mu=theta[parent_idx],
-                                         mu=theta[parent_idx] + betas[node_name(n)],
-                                         C=sigma[parent_idx])
-    #C=sigma[parent_idx]*var_factors[node_name(n)])
+        #var_factors[str(i)] = pm.Uniform('var_factor_{}'.format(str(i)), lower=0, upper=1000)
 
-    sigma[node_name(n)] = pm.WishartCov('sigma_{}'.format(node_name(n)),
-                                        value=node_matrices[node_name(n)],
-                                        #value=np.eye(num_traits),
+        betas[node_name(n)] = pm.MvNormal('betas_{}'.format(node_name(n)),
+                                          #value=np.zeros(num_traits),
+                                          mu=np.zeros(num_traits).T,
+                                          shape=(num_traits,),
+                                          Tau=np.eye(num_traits)*100.)
+
+        print type(sigma[parent_idx])
+        theta[node_name(n)] = pm.MvNormal('theta_{}'.format(node_name(n)),
+                                          #value=node_means[node_name(n)],
+                                          #observed=np.zeros(num_traits),
+                                          shape=(num_traits,),
+                                          mu=theta[parent_idx] + betas[node_name(n)],
+                                          Tau=sigma[parent_idx])
+        #C=sigma[parent_idx]*var_factors[node_name(n)])
+
+        sigma[node_name(n)] = pm.Wishart('sigma_{}'.format(node_name(n)),
+                                        #observed=node_matrices[node_name(n)],
                                         n=num_traits+1,
-                                        C=sigma[parent_idx])
+                                        p=num_traits+1,
+                                        V=sigma[parent_idx])
 
-data_list = []
-for n in t.leaf_nodes():
-    leaf_idx = node_name(n)
-    data_list.append(pm.MvNormalCov('data_{}'.format(n.taxon),
-                                    mu=theta[leaf_idx],
-                                    C=sigma[leaf_idx],
-                                    value=np.array(data.ix[data['genus'] == str(n.taxon), 0:num_traits]),
-                                    observed=True))
+    data_list = []
+    for n in t.leaf_nodes():
+        leaf_idx = node_name(n)
+        data_list.append(pm.MvNormal('data_{}'.format(n.taxon),
+                                      mu=theta[leaf_idx],
+                                      shape=(num_traits,),
+                                      Tau=sigma[leaf_idx],
+                                      observed=np.array(data.ix[data['genus'] == str(n.taxon), 0:num_traits])))
