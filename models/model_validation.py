@@ -15,7 +15,7 @@ if cmd_subfolder not in sys.path:
 
 t = dendropy.Tree.get_from_path("../trees/random_tree.nw", "newick")
 num_leafs = len(t.leaf_nodes())
-num_traits = 10
+num_traits = 4
 
 for number,n in enumerate(t.internal_nodes()):
     if not n.taxon:
