@@ -65,7 +65,6 @@ for g in genus:
 
 # Funcao que recebe uma lista de filhos e calcula a matriz media pro parent
 # node
-
 def matrix_mean(child_labels):
     new_matrix = np.zeros((num_traits, num_traits))
     sample = 0

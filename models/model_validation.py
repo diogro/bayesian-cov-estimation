@@ -71,12 +71,14 @@ def matrix_mean(child_labels):
     sample = 0
     new_mean = np.zeros(num_traits)
     for child in child_labels:
+        node = node_name(child)
+        new_mean = new_mean +\
+                node_sample_size[node] * node_means[node]
         new_matrix = new_matrix +\
-            node_sample_size[node_name(child)] * node_matrices[node_name(child)]
-        sample = sample + node_sample_size[node_name(child)]
-        new_mean = new_mean + node_means[node_name(child)]
+            node_sample_size[node] * node_matrices[node]
+        sample = sample + node_sample_size[node]
     new_matrix = new_matrix/sample
-    new_mean = new_mean/len(child_labels)
+    new_mean = new_mean/sample
     return new_matrix, sample, new_mean
 
 # Calculando as matrizes e tamanhos amostrais para todos os nodes
